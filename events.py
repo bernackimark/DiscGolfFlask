@@ -27,7 +27,7 @@ class EventResult:
 
 def get_all_event_results() -> list[dict]:
     result_list = []
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     mpo_results = (session.query(Player, Event, Tournament).
                    join(Player, Event.mpo_champ_id == Player.pdga_id).
                    join(Tournament, Event.tourney_id == Tournament.id)).all()
