@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from pathlib import Path
 
 import events
@@ -9,7 +9,8 @@ basedir = Path(__file__).parent.resolve()
 
 @app.route('/')
 def home():
-    return '<h1>Whats up slappers?</h1>'
+    return render_template("streamlit.html")
+    # return '<h1>Whats up slappers?</h1>'
 
 @app.route('/api/players')
 def all_players() -> list[dict]:
