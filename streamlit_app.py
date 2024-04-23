@@ -3,22 +3,19 @@ import json
 import requests
 import streamlit as st
 
-from local_data import local_data
+# from UI.local_data import local_data
 
 DATA_URL = 'https://disc-golf.onrender.com/api/results'
 
 @st.cache_data
-def get_data(use_api: bool = True) -> list[dict]:
-    if use_api:
-        resp = requests.get(DATA_URL)
-        if resp.status_code != 200:
-            raise ConnectionError("Could not connect to api")
-        return resp.json()
-
-    return local_data
+def get_data() -> list[dict]:
+    resp = requests.get(DATA_URL)
+    if resp.status_code != 200:
+        raise ConnectionError("Could not connect to api")
+    return resp.json()
 
 
-data = get_data(use_api=False)
+data = get_data()
 
 # Convert serialized end_date to datetime
 for entry in data:
@@ -101,11 +98,12 @@ table_data = sorted(filtered_data, key=lambda x: x['end_date'], reverse=True)
 # Main pane - Display table
 st.header('Events')
 
-column_order = ['year', 'end_date', 'player_name', 'governing_body', 'designation', 'division',
-                'city', 'state', 'country']
-column_config = {'year': st.column_config.NumberColumn('Year', format='%d'), 'end_date': 'End Date',
-                 'player_name': 'Winner', 'governing_body': 'Governing Body', 'designation': 'Designation',
-                 'division': 'Division', 'city': 'City', 'state': 'State', 'country': 'Country'}
+column_order = ['year', 'player_name', 'tourney_name', 'designation',
+                'division', 'state', 'country']
+column_config = {'year': st.column_config.NumberColumn('Year', format='%d'),
+                 'player_name': 'Winner', 'tourney_name': 'Tournament',
+                 'designation': 'Designation',
+                 'division': 'Division', 'state': 'State', 'country': 'Country'}
 
 height = (len(table_data) * 36 + 36)
 
