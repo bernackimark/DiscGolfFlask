@@ -1,6 +1,6 @@
 [project]
 name = "discgolfflask"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Mark Bernacki <bernackimark@gmail.com>"]
 license = "MIT"
 requires-python = "^3.9"
@@ -14,6 +14,7 @@ dependencies = ["blinker==1.7.0",
 "MarkupSafe==2.1.5",
 "packaging==24.0",
 "psycopg2-binary==2.9.9",
+"streamlit==1.33.0",
 "SQLAlchemy==2.0.29",
 "typing_extensions==4.11.0",
 "Werkzeug==3.0.2"]
