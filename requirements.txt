@@ -2,4 +2,5 @@ flask
 gunicorn
 psycopg2-binary
 python-dotenv
+streamlit
 SQLAlchemy
