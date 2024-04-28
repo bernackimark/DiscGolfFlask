@@ -1499,7 +1499,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Gregg Barsby",
     "player_photo_url": "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-    "state": null,
+    "state": None,
     "tourney_name": "PCS Sula Open",
     "year": 2022
   },
@@ -1803,7 +1803,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Ricky Wysocki",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-3488-1645648320.jpg?itok=3NC1UQb4",
-    "state": null,
+    "state": None,
     "tourney_name": "European Masters",
     "year": 2016
   },
@@ -1851,7 +1851,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paul McBeth",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-10353-1448324685.jpg?itok=yZigEm6n",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2017
   },
@@ -1867,7 +1867,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Ricky Wysocki",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-3488-1645648320.jpg?itok=3NC1UQb4",
-    "state": null,
+    "state": None,
     "tourney_name": "Aussie Open",
     "year": 2017
   },
@@ -1915,7 +1915,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Eagle McMahon",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-281501-1612926162.jpg?itok=r7n4QGCL",
-    "state": null,
+    "state": None,
     "tourney_name": "Konopiste Open",
     "year": 2018
   },
@@ -1963,7 +1963,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paul McBeth",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-10353-1448324685.jpg?itok=yZigEm6n",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2019
   },
@@ -2059,7 +2059,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Eagle McMahon",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-281501-1612926162.jpg?itok=r7n4QGCL",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2022
   },
@@ -2171,7 +2171,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paul McBeth",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-10353-1448324685.jpg?itok=yZigEm6n",
-    "state": null,
+    "state": None,
     "tourney_name": "PCS Sula Open",
     "year": 2023
   },
@@ -2187,7 +2187,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Corey Ellis",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-23628-1665642785.jpg?itok=mImakpRw",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2023
   },
@@ -3947,7 +3947,7 @@ local_data = [
     "player_country_flag": ":flag-no:",
     "player_name": "Anniken Steen",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-955056-1644179292.jpg?itok=8T0TGLPE",
-    "state": null,
+    "state": None,
     "tourney_name": "PCS Sula Open",
     "year": 2022
   },
@@ -4283,7 +4283,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Catrina Allen",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-165676-1449190620.jpg?itok=EIXM_c3N",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2017
   },
@@ -4299,7 +4299,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paige Pierce",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-4101-1630012514.jpg?itok=NQElXDEB",
-    "state": null,
+    "state": None,
     "tourney_name": "Aussie Open",
     "year": 2017
   },
@@ -4347,7 +4347,7 @@ local_data = [
     "player_country_flag": ":flag-fi:",
     "player_name": "Eveliina Salonen",
     "player_photo_url": "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-    "state": null,
+    "state": None,
     "tourney_name": "Konopiste Open",
     "year": 2018
   },
@@ -4395,7 +4395,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paige Pierce",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-4101-1630012514.jpg?itok=NQElXDEB",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2019
   },
@@ -4491,7 +4491,7 @@ local_data = [
     "player_country_flag": ":flag-us:",
     "player_name": "Paige Pierce",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-4101-1630012514.jpg?itok=NQElXDEB",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2022
   },
@@ -4603,7 +4603,7 @@ local_data = [
     "player_country_flag": ":flag-ee:",
     "player_name": "Kristin Tattar",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-232541-1614721683.jpg?itok=kLgyAW5Z",
-    "state": null,
+    "state": None,
     "tourney_name": "PCS Sula Open",
     "year": 2023
   },
@@ -4619,7 +4619,7 @@ local_data = [
     "player_country_flag": ":flag-ee:",
     "player_name": "Kristin Tattar",
     "player_photo_url": "https://www.pdga.com/files/styles/large/public/pictures/picture-232541-1614721683.jpg?itok=kLgyAW5Z",
-    "state": null,
+    "state": None,
     "tourney_name": "European Open",
     "year": 2023
   },
