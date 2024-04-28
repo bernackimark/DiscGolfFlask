@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from flask import abort
 
-from models import Event, Player, session, Tournament
+from models import Country, Event, Player, session, Tournament
 
 
 @dataclass
@@ -11,6 +11,8 @@ class EventResult:
     player_name: str
     division: str
     player_photo_url: str
+    player_country: str
+    player_country_flag: str
     year: int
     end_date: date
     governing_body: str
@@ -28,19 +30,23 @@ class EventResult:
 def get_all_event_results() -> list[dict]:
     result_list = []
     print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    mpo_results = (session.query(Player, Event, Tournament).
+    mpo_results = (session.query(Player, Event, Tournament, Country).
                    join(Player, Event.mpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in mpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division, player.photo_url,
+                   join(Tournament, Event.tourney_id == Tournament.id).
+                   join(Country, Player.country_code == Country.code)).all()
+    for player, event, tournament, country in mpo_results:
+        er = EventResult(player.pdga_id, player.full_name, player.division,
+                         player.photo_url, country.name, country.emoji_flag_str,
                          event.year, event.end_date, event.governing_body, event.designation,
                          tournament.name, tournament.city, tournament.state, tournament.country)
         result_list.append(er.__dict__)
-    fpo_results = (session.query(Player, Event, Tournament).
+    fpo_results = (session.query(Player, Event, Tournament, Country).
                    join(Player, Event.fpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in fpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division, player.photo_url,
+                   join(Tournament, Event.tourney_id == Tournament.id).
+                   join(Country, Player.country_code == Country.code)).all()
+    for player, event, tournament, country in fpo_results:
+        er = EventResult(player.pdga_id, player.full_name, player.division,
+                         player.photo_url, country.name, country.emoji_flag_str,
                          event.year, event.end_date, event.governing_body, event.designation,
                          tournament.name, tournament.city, tournament.state, tournament.country)
         result_list.append(er.__dict__)

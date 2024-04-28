@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from dotenv import load_dotenv
 import os
-from sqlalchemy import DateTime, ForeignKey, Integer, create_engine, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from typing import Optional
 
@@ -30,6 +30,15 @@ class Tournament(Base):
     state: Mapped[Optional[str]]
     country: Mapped[str]
 
+class Country(Base):
+    __tablename__ = 'country'
+    code: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str]
+
+    @property
+    def emoji_flag_str(self) -> str:
+        return f':flag-{self.code.lower()}:'
+
 class Player(Base):
     __tablename__ = 'dg_player'
     pdga_id: Mapped[int] = mapped_column(primary_key=True)
@@ -37,6 +46,7 @@ class Player(Base):
     last_name: Mapped[str]
     division: Mapped[str]
     photo_url: Mapped[Optional[str]]
+    country_code: Mapped[Optional[str]] = mapped_column(String, ForeignKey('country.code'))
 
     @property
     def full_name(self) -> str:
@@ -72,4 +82,4 @@ class Event(Base):
 
 
 # Create the database tables
-# Base.metadata.create_all(engine)
+Base.metadata.create_all(engine)
