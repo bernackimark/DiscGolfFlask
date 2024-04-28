@@ -82,4 +82,4 @@ class Event(Base):
 
 
 # Create the database tables
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
