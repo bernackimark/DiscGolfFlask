@@ -34,10 +34,8 @@ class Country(Base):
     __tablename__ = 'country'
     code: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
+    flag_emoji: Mapped[str]
 
-    @property
-    def emoji_flag_str(self) -> str:
-        return f':flag-{self.code.lower()}:'
 
 class Player(Base):
     __tablename__ = 'dg_player'

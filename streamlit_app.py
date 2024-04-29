@@ -1,13 +1,13 @@
 from datetime import date, datetime, timedelta
-import json
 import requests
 import streamlit as st
 
 from UI.local_data import local_data
+from countries import COUNTRIES_MAP
 
 DATA_URL = 'https://disc-golf.onrender.com/api/results'
-MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE = date(1900, 1, 1), date(2099, 12, 31)
 
+MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE = date(1900, 1, 1), date(2099, 12, 31)
 TODAY = date.today()
 TIME_PERIODS = {
     'Last 30 Days': (TODAY - timedelta(days=30), TODAY),
@@ -17,6 +17,7 @@ TIME_PERIODS = {
     'Last 365 Days': (TODAY - timedelta(days=365), TODAY),
     'All Time': (MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE)
 }
+TABLE_ROW_HEIGHT = 36
 
 @st.cache_data
 def get_data() -> list[dict]:
@@ -27,14 +28,39 @@ def get_data() -> list[dict]:
     return resp.json()
 
 
-data = get_data()
+def clean_data(api_data: list[dict]) -> list[dict]:
+    cleaned_data = []
+    for row in api_data:
+        # convert serialized dt to python date
+        row['end_date'] = datetime.strptime(row['end_date'], "%a, %d %b %Y %H:%M:%S %Z").date()
+        # create a column for player, concatenating name & flag
+        row['player'] = f"{row['player_name']} {COUNTRIES_MAP.get(row['player_country_code'])}"
+        cleaned_data.append(row)
+    return cleaned_data
 
-# Convert serialized end_date to datetime
-for entry in data:
-    entry["end_date"] = datetime.strptime(entry["end_date"], "%a, %d %b %Y %H:%M:%S %Z").date()
 
-# Function to filter data based on selected criteria
-def filter_data(data, filters):
+tmp_data = get_data()
+data = clean_data(tmp_data)
+
+def unique_sorted_values(key: str) -> list[str]:
+    return sorted({row[key] for row in data if row[key]})
+
+
+FILTER_MAP = {
+    'player': unique_sorted_values('player'),
+    'player_country_code': unique_sorted_values('player_country_code'),
+    'division': unique_sorted_values('division'),
+    'governing_body': unique_sorted_values('governing_body'),
+    'tourney_name': unique_sorted_values('tourney_name'),
+    'state': unique_sorted_values('state'),
+    'country': unique_sorted_values('country'),
+}
+
+FILTER_MAP['division'].append('All')
+FILTER_MAP['governing_body'].append('All')
+
+
+def filter_data(data, filters) -> list[dict]:
     filtered_data = data
     for key, value in filters.items():
         if value and value != 'All':
@@ -45,41 +71,34 @@ def filter_data(data, filters):
                 filtered_data = [entry for entry in filtered_data if entry[key] in value]
     return sorted(filtered_data, key=lambda x: x['end_date'], reverse=True)
 
-def group_data(data, grouper):
+def group_data(data, grouper) -> list[dict]:
+    if grouper == 'player':
+        grouper = 'player_photo_url'
     groups = {row[grouper] for row in data if row.get(grouper)}
     values = [row[grouper] for row in data if row.get(grouper)]
     groups_values = [{'group': g, 'count': values.count(g)} for g in groups]
     return sorted(groups_values, key=lambda x: [x['count'], x['group']], reverse=True)
 
 
+# DISPLAY THE DATA
 # Sidebar - Filters
 with st.sidebar:
     st.sidebar.header('Filters')
 
-    distinct_player_names = sorted({entry["player_name"] for entry in data})
-    selected_player_names = st.sidebar.multiselect('Winner', distinct_player_names)
-
-    distinct_divisions = sorted({entry['division'] for entry in data if entry['division']})
-    distinct_divisions.append('All')
-    selected_divisions = st.sidebar.radio('Division', distinct_divisions, horizontal=True, index=2)
-
-    distinct_governing_bodies = sorted({entry['governing_body'] for entry in data if entry['governing_body']})
-    distinct_governing_bodies.append('All')
-    selected_governing_bodies = st.sidebar.radio('Governing Body', distinct_governing_bodies, horizontal=True, index=2)
-
-    distinct_tournament_names = sorted({entry["tourney_name"] for entry in data})
-    selected_tournament_names = st.sidebar.multiselect('Tournament', distinct_tournament_names)
+    selected_players = st.sidebar.multiselect('Winner', FILTER_MAP['player'])
+    selected_player_country_codes = st.sidebar.multiselect("Winner's Country", FILTER_MAP['player_country_code'])
+    selected_divisions = st.sidebar.radio('Division', FILTER_MAP['division'], horizontal=True, index=2)
+    selected_governing_bodies = st.sidebar.radio('Governing Body', FILTER_MAP['governing_body'], horizontal=True, index=2)
+    selected_tournament_names = st.sidebar.multiselect('Tournament', FILTER_MAP['tourney_name'])
 
     # Place state & country side-by-side sidebar into two columns
     col1, col2 = st.sidebar.columns(2)
 
     with col1:
-        distinct_tournament_states = sorted({entry["state"] for entry in data if entry["state"]})
-        selected_tournament_states = col1.multiselect('State', distinct_tournament_states)
+        selected_tournament_states = col1.multiselect('State', FILTER_MAP['state'])
 
     with col2:
-        distinct_tournament_countries = sorted({entry["country"] for entry in data})
-        selected_tournament_countries = col2.multiselect('Country', distinct_tournament_countries)
+        selected_tournament_countries = col2.multiselect('Country', FILTER_MAP['country'])
 
     selected_time_period = st.sidebar.selectbox('Time Period', list(TIME_PERIODS.keys()), index=5)
 
@@ -88,12 +107,13 @@ with st.sidebar:
 # Sidebar - Groupers
 with st.sidebar:
     st.sidebar.header('Grouper')
-    groupers = [None, 'player_name', 'tourney_name', 'state', 'country', 'designation']
+    groupers = [None, 'player', 'tourney_name', 'state', 'country', 'designation']
     selected_grouper = st.sidebar.selectbox('Grouper', options=groupers, index=0)
 
 # Apply filters to data
 filters = {
-    "player_name": selected_player_names,
+    "player": selected_players,
+    "player_country_code": selected_player_country_codes,
     "tourney_name": selected_tournament_names,
     "division": selected_divisions,
     "governing_body": selected_governing_bodies,
@@ -102,19 +122,21 @@ filters = {
     "time_period": (start_date, end_date)
 }
 
-filtered_data = filter_data(data, filters)
-grouped_data = group_data(filtered_data, selected_grouper)
+filtered_data: list[dict] = filter_data(data, filters)
+grouped_data: list[dict] = group_data(filtered_data, selected_grouper)
 
 # Main pane - Leaderboard
 with st.container():
     div_str = selected_divisions if selected_divisions != 'All' else ''
     gov_str = selected_governing_bodies if selected_governing_bodies != 'All' else ''
     time_period_str = selected_time_period if selected_time_period != 'All Time' else ''
-    player_str = ', '.join([_ for _ in selected_player_names])
+    player_str = ', '.join([_ for _ in selected_players])
     tourney_str = ', '.join([_ for _ in selected_tournament_names])
-    st.header(f'{div_str} {gov_str} {time_period_str} Leaderboard for {player_str} {tourney_str}')
+    nationality_str = ', '.join([_ for _ in selected_player_country_codes])
+    st.header(f'{div_str} {gov_str} {time_period_str} Leaderboard for {player_str} {tourney_str} {nationality_str}')
 
-    leaderboard_column_config = {'group': selected_grouper}
+    leaderboard_column_config = {'group': selected_grouper} if selected_grouper != 'player' \
+        else {'group': st.column_config.ImageColumn(width='large')}
 
     if selected_grouper:
         st.dataframe(grouped_data, column_config=leaderboard_column_config)
@@ -123,13 +145,12 @@ with st.container():
 with st.container():
     st.header('Events')
 
-    column_order = ['year', 'player_name', 'tourney_name', 'designation',
-                    'division', 'state', 'country']
+    column_order = ['year', 'player', 'tourney_name', 'designation', 'division', 'state', 'country']
     column_config = {'year': st.column_config.NumberColumn('Year', format='%d'),
-                     'player_name': 'Winner', 'tourney_name': 'Tournament',
-                     'designation': 'Designation',
+                     'player': 'Winner', 'tourney_name': 'Tournament', 'designation': 'Designation',
                      'division': 'Division', 'state': 'State', 'country': 'Country'}
 
-    height = (len(filtered_data) * 36 + 36)
+    height = (len(filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
 
-    st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config)
+    st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config,
+                 use_container_width=True)
