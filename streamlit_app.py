@@ -15,9 +15,11 @@ TIME_PERIODS = {
     'This Year': (date(TODAY.year, 1, 1), TODAY),
     'Last Year': (date(TODAY.year - 1, 1, 1), TODAY.replace(month=1, day=1) - timedelta(days=1)),
     'Last 365 Days': (TODAY - timedelta(days=365), TODAY),
-    'All Time': (MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE)
+    'All Time (DGPT Era)': (MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE)
 }
 TABLE_ROW_HEIGHT = 36
+DESIGNATION_MAP = {'DGPT +': 'Elevated', 'Elite +': 'Elevated',
+                   'Elite': 'Standard', 'DGPT Undesignated': 'Standard', 'Silver': 'Standard'}
 
 @st.cache_data
 def get_data() -> list[dict]:
@@ -33,8 +35,11 @@ def clean_data(api_data: list[dict]) -> list[dict]:
     for row in api_data:
         # convert serialized dt to python date
         row['end_date'] = datetime.strptime(row['end_date'], "%a, %d %b %Y %H:%M:%S %Z").date()
-        # create a column for player, concatenating name & flag
-        row['player'] = f"{row['player_name']} {COUNTRIES_MAP.get(row['player_country_code'])}"
+        # create some columns, including the flag emoji
+        row['player'] = f"{row['player_name']}  {COUNTRIES_MAP.get(row['player_country_code'])}"
+        row['country_w_flag'] = f"{row['player_country_code']}  {COUNTRIES_MAP.get(row['player_country_code'])}"
+        # clean up the designation concepts
+        row['designation_map'] = DESIGNATION_MAP.setdefault(row['designation'], row['designation'])
         cleaned_data.append(row)
     return cleaned_data
 
@@ -46,18 +51,12 @@ def unique_sorted_values(key: str) -> list[str]:
     return sorted({row[key] for row in data if row[key]})
 
 
-FILTER_MAP = {
-    'player': unique_sorted_values('player'),
-    'player_country_code': unique_sorted_values('player_country_code'),
-    'division': unique_sorted_values('division'),
-    'governing_body': unique_sorted_values('governing_body'),
-    'tourney_name': unique_sorted_values('tourney_name'),
-    'state': unique_sorted_values('state'),
-    'country': unique_sorted_values('country'),
-}
+filter_elements = ['player', 'country_w_flag', 'division', 'designation_map', 'tourney_name', 'state', 'country']
+filter_map = {e: unique_sorted_values(e) for e in filter_elements}
+filter_map['division'].append('All')
+filter_map['designation_map'].append('All')
 
-FILTER_MAP['division'].append('All')
-FILTER_MAP['governing_body'].append('All')
+groupers = ['player', 'tourney_name', 'state', 'country', 'designation_map', 'year']
 
 
 def filter_data(data, filters) -> list[dict]:
@@ -72,8 +71,8 @@ def filter_data(data, filters) -> list[dict]:
     return sorted(filtered_data, key=lambda x: x['end_date'], reverse=True)
 
 def group_data(data, grouper) -> list[dict]:
-    if grouper == 'player':
-        grouper = 'player_photo_url'
+    # if grouper == 'player':
+    #     grouper = 'player_photo_url'
     groups = {row[grouper] for row in data if row.get(grouper)}
     values = [row[grouper] for row in data if row.get(grouper)]
     groups_values = [{'group': g, 'count': values.count(g)} for g in groups]
@@ -85,38 +84,32 @@ def group_data(data, grouper) -> list[dict]:
 with st.sidebar:
     st.sidebar.header('Filters')
 
-    selected_players = st.sidebar.multiselect('Winner', FILTER_MAP['player'])
-    selected_player_country_codes = st.sidebar.multiselect("Winner's Country", FILTER_MAP['player_country_code'])
-    selected_divisions = st.sidebar.radio('Division', FILTER_MAP['division'], horizontal=True, index=2)
-    selected_governing_bodies = st.sidebar.radio('Governing Body', FILTER_MAP['governing_body'], horizontal=True, index=2)
-    selected_tournament_names = st.sidebar.multiselect('Tournament', FILTER_MAP['tourney_name'])
+    selected_players = st.sidebar.multiselect('Winner', filter_map['player'])
+    selected_player_countries = st.sidebar.multiselect("Winner's Country", filter_map['country_w_flag'])
+    selected_divisions = st.sidebar.radio('Division', filter_map['division'], horizontal=True, index=2)
+    selected_designations = st.sidebar.radio('Designation', filter_map['designation_map'], horizontal=True, index=3)
+    selected_tournament_names = st.sidebar.multiselect('Tournament', filter_map['tourney_name'])
 
     # Place state & country side-by-side sidebar into two columns
     col1, col2 = st.sidebar.columns(2)
-
-    with col1:
-        selected_tournament_states = col1.multiselect('State', FILTER_MAP['state'])
-
-    with col2:
-        selected_tournament_countries = col2.multiselect('Country', FILTER_MAP['country'])
+    selected_tournament_states = col1.multiselect('State', filter_map['state'])
+    selected_tournament_countries = col2.multiselect('Country', filter_map['country'])
 
     selected_time_period = st.sidebar.selectbox('Time Period', list(TIME_PERIODS.keys()), index=5)
-
     start_date, end_date = TIME_PERIODS[selected_time_period]
 
 # Sidebar - Groupers
 with st.sidebar:
     st.sidebar.header('Grouper')
-    groupers = [None, 'player', 'tourney_name', 'state', 'country', 'designation']
     selected_grouper = st.sidebar.selectbox('Grouper', options=groupers, index=0)
 
 # Apply filters to data
 filters = {
     "player": selected_players,
-    "player_country_code": selected_player_country_codes,
+    "country_w_flag": selected_player_countries,
     "tourney_name": selected_tournament_names,
     "division": selected_divisions,
-    "governing_body": selected_governing_bodies,
+    "designation_map": selected_designations,
     "state": selected_tournament_states,
     "country": selected_tournament_countries,
     "time_period": (start_date, end_date)
@@ -124,30 +117,29 @@ filters = {
 
 filtered_data: list[dict] = filter_data(data, filters)
 grouped_data: list[dict] = group_data(filtered_data, selected_grouper)
+print(grouped_data)
 
 # Main pane - Leaderboard
 with st.container():
-    div_str = selected_divisions if selected_divisions != 'All' else ''
-    gov_str = selected_governing_bodies if selected_governing_bodies != 'All' else ''
-    time_period_str = selected_time_period if selected_time_period != 'All Time' else ''
-    player_str = ', '.join([_ for _ in selected_players])
-    tourney_str = ', '.join([_ for _ in selected_tournament_names])
-    nationality_str = ', '.join([_ for _ in selected_player_country_codes])
-    st.header(f'{div_str} {gov_str} {time_period_str} Leaderboard for {player_str} {tourney_str} {nationality_str}')
+    st.header('Leaderboard (DGPT Era)')
 
-    leaderboard_column_config = {'group': selected_grouper} if selected_grouper != 'player' \
-        else {'group': st.column_config.ImageColumn(width='large')}
+    if selected_grouper == 'player':
+        leaderboard_column_config = {'group': st.column_config.ImageColumn('Winner', width='large')}
+    if selected_grouper == 'year':
+        leaderboard_column_config = {'group': st.column_config.NumberColumn('Year', format='%d')}
+    else:
+        leaderboard_column_config = {'group': st.column_config.Column(selected_grouper.replace('_', ' ').title(),
+                                                                      width='large')}
 
-    if selected_grouper:
-        st.dataframe(grouped_data, column_config=leaderboard_column_config)
+    st.dataframe(grouped_data, column_config=leaderboard_column_config)
 
 # Main pane - Table
 with st.container():
     st.header('Events')
 
-    column_order = ['year', 'player', 'tourney_name', 'designation', 'division', 'state', 'country']
+    column_order = ['year', 'player', 'tourney_name', 'designation_map', 'division', 'state', 'country']
     column_config = {'year': st.column_config.NumberColumn('Year', format='%d'),
-                     'player': 'Winner', 'tourney_name': 'Tournament', 'designation': 'Designation',
+                     'player': 'Winner', 'tourney_name': 'Tournament', 'designation_map': 'Designation',
                      'division': 'Division', 'state': 'State', 'country': 'Country'}
 
     height = (len(filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
