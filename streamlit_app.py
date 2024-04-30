@@ -102,6 +102,13 @@ with st.sidebar:
     st.sidebar.header('Grouper')
     selected_grouper = st.sidebar.selectbox('Grouper', options=groupers, index=0)
 
+
+# TODO: I have these filters here because I'm creating "selected_x" here. Instead each filter/grouper should be attrs:
+# items, default value, & selected value?
+# example: {'player': ['title': 'Winner', 'items': unique_sorted(), 'default_value': None, 'selected_value': None]
+# this could also be a Class
+
+
 # Apply filters to data
 filters = {
     "player": selected_players,
@@ -116,7 +123,6 @@ filters = {
 
 filtered_data: list[dict] = filter_data(data, filters)
 grouped_data: list[dict] = group_data(filtered_data, selected_grouper)
-print(grouped_data)
 
 # Main pane - Leaderboard
 with st.container():
