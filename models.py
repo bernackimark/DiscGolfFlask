@@ -30,11 +30,21 @@ class Tournament(Base):
     state: Mapped[Optional[str]]
     country: Mapped[str]
 
+    @property
+    def k_v(self) -> dict:
+        # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
+        return {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+
 class Country(Base):
     __tablename__ = 'country'
     code: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     flag_emoji: Mapped[str]
+
+    @property
+    def k_v(self) -> dict:
+        # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
+        return {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
 
 
 class Player(Base):
@@ -53,7 +63,9 @@ class Player(Base):
     @property
     def k_v(self) -> dict:
         # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
-        return {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+        instance_dict = {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+        instance_dict['full_name'] = self.full_name
+        return instance_dict
 
 
 class Event(Base):
