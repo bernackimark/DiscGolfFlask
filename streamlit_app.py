@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, datetime, timedelta
 import requests
 import streamlit as st
@@ -71,12 +72,10 @@ def filter_data(data, filters) -> list[dict]:
     return sorted(filtered_data, key=lambda x: x['end_date'], reverse=True)
 
 def group_data(data, grouper) -> list[dict]:
-    # if grouper == 'player':
-    #     grouper = 'player_photo_url'
-    groups = {row[grouper] for row in data if row.get(grouper)}
-    values = [row[grouper] for row in data if row.get(grouper)]
-    groups_values = [{'group': g, 'count': values.count(g)} for g in groups]
-    return sorted(groups_values, key=lambda x: [x['count'], x['group']], reverse=True)
+    """ Returns [{'': Alice, ' ': 5}, {'': Bob}, ' ': 3].  It is ordered by the value descending.
+    The keys are blanks because streamlit datatables must have keys, else default column headers are shown. """
+    counter = Counter([row[grouper] for row in data if grouper])
+    return sorted([{'': k, ' ': v} for k, v in counter.items()], key=lambda x: x[' '], reverse=True)
 
 
 # DISPLAY THE DATA
