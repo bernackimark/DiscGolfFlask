@@ -6,6 +6,9 @@ def get_all_players() -> list[dict]:
     results = session.query(Player).all()
     return [e.__dict__ for e in results]
 
+def get_all_players_as_classes() -> list[Player]:
+    return [_ for _ in session.query(Player).all()]
+
 def get_player(pdga_id: int) -> Player:
     player = session.query(Player).filter_by(pdga_id=pdga_id).one_or_none()
     return player or abort(404, f'Player with PDGA# {pdga_id} not found')
