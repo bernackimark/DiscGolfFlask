@@ -6,6 +6,9 @@ def get_all_tourneys() -> list[dict]:
     results = session.query(Tournament).all()
     return [e.__dict__ for e in results]
 
+def get_all_tourneys_as_classes() -> list[Tournament]:
+    return [_ for _ in session.query(Tournament).all()]
+
 def get_tourney(name: str) -> list[Tournament]:
     tourney = session.query(Tournament).filter_by(name=name).all()
     return tourney or abort(404, f'Tournament named {name} not found')
