@@ -75,8 +75,7 @@ class Event(Base):
     designation: Mapped[str]
     start_date: Mapped[date]
     end_date: Mapped[date]
-    mpo_champ_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dg_player.pdga_id'))
-    fpo_champ_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dg_player.pdga_id'))
+    winner_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dg_player.pdga_id'))
     tourney_id: Mapped[int] = mapped_column(Integer, ForeignKey('dg_tourney.id'))
 
     @property
