@@ -1,108 +1,88 @@
-from dataclasses import dataclass
-from datetime import date, datetime
+from dataclasses import dataclass, field
+from datetime import date
 from flask import abort
+from sqlalchemy.engine.row import Row
 
-from models import Event, Player, session, Tournament
+from models import Country, Event, Player, session, Tournament
+from players import get_all_players_as_classes
+from tournaments import get_all_tourneys_as_classes
 
 
 @dataclass
-class EventResult:
-    pdga_id: int
-    player_name: str
-    division: str
-    player_photo_url: str
-    player_country_code: str
-    year: int
-    end_date: date
+class IncomingEvent:
     governing_body: str
     designation: str
+    start_date: date
+    end_date: date
+    winner_name: str
     tourney_name: str
-    city: str
-    state: str
-    country: str
+    winner_id: int = field(init=False)
+    division: str = field(init=False)
+    tourney_id: int = field(init=False)
+
+    def __post_init__(self):
+        all_players = get_all_players_as_classes()
+        if self.winner_name not in {e.full_name for e in all_players}:
+            abort(406, f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
+        self.winner_id, self.division = next((player.pdga_id, player.division) for player in all_players if self.winner_name == player.full_name)
+
+        all_tourneys = get_all_tourneys_as_classes()
+        if self.tourney_name not in {e.name for e in all_tourneys}:
+            abort(406, f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
+        self.tourney_id = next(tourney.name for tourney in all_tourneys if self.tourney_name == tourney.name)
+
+        all_events: list[Event] = session.query(Event).all()
+        for e in all_events:
+            if self.tourney_id == e.tourney_id and self.end_date == e.end_date:
+                abort(406, f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
+
+        if self.governing_body not in {e.governing_body for e in all_events}:
+            abort(406, f"{self.governing_body} is not a legitimate governing body")
+
+        if self.end_date < self.start_date:
+            abort(406, f"End date cannot be before start date")
 
     @property
-    def k_v(self) -> dict:
-        return {k: v for idx, (k, v) in enumerate(self.__dict__.items())}
+    def db_dict(self) -> dict:
+        return {'governing_body': self.governing_body, 'designation': self.designation, 'start_date': self.start_date,
+                'end_date': self.end_date, 'winner_id': self.winner_id, 'tourney_id': self.tourney_id}
+
+    def create_event(self) -> None:
+        session.add(self.db_dict)
+        session.commit()
 
 
-def get_all_event_results() -> list[dict]:
-    result_list = []
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    mpo_results = (session.query(Player, Event, Tournament).
-                   join(Player, Event.mpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in mpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division,
-                         player.photo_url, player.country_code,
-                         event.year, event.end_date, event.governing_body, event.designation,
-                         tournament.name, tournament.city, tournament.state, tournament.country)
-        result_list.append(er.__dict__)
-    fpo_results = (session.query(Player, Event, Tournament).
-                   join(Player, Event.fpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in fpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division,
-                         player.photo_url, player.country_code,
-                         event.year, event.end_date, event.governing_body, event.designation,
-                         tournament.name, tournament.city, tournament.state, tournament.country)
-        result_list.append(er.__dict__)
-    return result_list
+@dataclass
+class EventResults:
+    results: list[Row] = field(init=False)
 
-def _get_all_event_results_as_classes() -> list[EventResult]:
-    result_list = []
-    mpo_results = (session.query(Player, Event, Tournament).
-                   join(Player, Event.mpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in mpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division, player.photo_url,
-                         event.year, event.end_date, event.governing_body, event.designation,
-                         tournament.name, tournament.city, tournament.state, tournament.country)
-        result_list.append(er)
-    fpo_results = (session.query(Player, Event, Tournament).
-                   join(Player, Event.fpo_champ_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id)).all()
-    for player, event, tournament in fpo_results:
-        er = EventResult(player.pdga_id, player.full_name, player.division, player.photo_url,
-                         event.year, event.end_date, event.governing_body, event.designation,
-                         tournament.name, tournament.city, tournament.state, tournament.country)
-        result_list.append(er)
-    return result_list
+    def __post_init__(self):
+        self.results = self._get_all_event_result_data()
 
-def get_all_events() -> list[dict]:
-    results = session.query(Event).all()
-    return [e.__dict__ for e in results]
+    @staticmethod
+    def _get_all_event_result_data() -> list[Row]:
+        results = (session.query(Player, Event, Tournament, Country).
+                   join(Player, Event.winner_id == Player.pdga_id).
+                   join(Tournament, Event.tourney_id == Tournament.id).
+                   join(Country, Player.country_code == Country.code)).all()
+        return [_ for _ in results]
 
-def _get_all_events_as_classes() -> list[Event]:
-    return session.query(Event).all()
+    @property
+    def event_results_nested(self) -> list[dict[str, dict]]:
+        """ Returns a list of nested dictionaries
+        {'event': {'end_date': ...}, 'player': {'full_name': ...}}"""
+        return [{'event': event.k_v, 'player': player.k_v, 'country': country.k_v, 'tourney': tourney.k_v}
+                for player, event, tourney, country in self.results]
 
-
-# NEXT: EVEN ANVIL REQUIRES THE DATA TO BE SERIALIZED ... I THINK I CAN GET AWAY W RETURNING PYTHON DICTS ...
-# HAVE GET_ALL_EVENTS return a list of dicts
-
-
-def get_event_results_with_kw(**kwargs) -> list[dict]:
-    """For any given count of keyword arguments, filter the event results,
-    returning only those which match all kwargs"""
-    all_results = _get_all_event_results_as_classes()
-    events = []
-    for event in all_results:
-        for key, value in kwargs.items():
-            if event.k_v[key] != value:
-                break
-        else:
-            if event not in events:
-                events.append(event)
-    return [e.k_v for e in events]
-
-
-def create_event(event):
-    tourney_id, end_date, year = event.get('tourney_id'), event.get('end_date'), event.get('end_date').year
-    # because year is a class property (not a db column), to use comparisons, must obtain the instance objects first
-    tourney_and_year = [e for e in _get_all_events_as_classes() if e.tourney_id == tourney_id and e.year == year]
-    if tourney_and_year:
-        tourney_name = session.query(Tournament.name).filter_by(id=tourney_id).first()[0]
-        abort(406, f"{tourney_name} from {year} already exists")
-
-    session.add(Event(**event))
-    session.commit()
+    @property
+    def event_results_flat(self) -> list[dict]:
+        """ Returns a single flattened dictionary for each event result.
+        Because tables may have the same column names, fully qualify the keys as table_{db_col}"""
+        event_results = []
+        for player, event, tourney, country in self.results:
+            p = {f'player_{k}': v for k, v in player.k_v.items()}
+            e = {f'event_{k}': v for k, v in event.k_v.items()}
+            t = {f'tourney_{k}': v for k, v in tourney.k_v.items()}
+            c = {f'country_{k}': v for k, v in country.k_v.items()}
+            event_results.append({**p, **e, **t, **c})
+        return event_results
