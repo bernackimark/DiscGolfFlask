@@ -5,6 +5,7 @@ authors = ["Mark Bernacki <bernackimark@gmail.com>"]
 license = "MIT"
 requires-python = "^3.9"
 dependencies = ["blinker==1.7.0",
+"bs4==0.0.2",
 "click==8.1.7",
 "Flask==3.0.3",
 "greenlet==3.0.3",
