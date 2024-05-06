@@ -86,6 +86,11 @@ def group_data(data, grouper) -> list[dict]:
 
 
 # DISPLAY THE DATA
+# Sidebar - Groupers
+with st.sidebar:
+    st.sidebar.header('Grouper')
+    selected_grouper = st.sidebar.selectbox('Grouper', options=grouper_map['event_grouper'], index=0)
+
 # Sidebar - Filters
 with st.sidebar:
     st.sidebar.header('Filters')
@@ -105,11 +110,6 @@ with st.sidebar:
 
     selected_time_period = st.sidebar.selectbox('Time Period', list(TIME_PERIODS.keys()), index=5)
     start_date, end_date = TIME_PERIODS[selected_time_period]
-
-# Sidebar - Groupers
-with st.sidebar:
-    st.sidebar.header('Grouper')
-    selected_grouper = st.sidebar.selectbox('Grouper', options=grouper_map['event_grouper'], index=0)
 
 
 # Apply filters to data
