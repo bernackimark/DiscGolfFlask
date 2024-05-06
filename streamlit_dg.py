@@ -23,6 +23,8 @@ TIME_PERIODS = {
 }
 TABLE_ROW_HEIGHT = 36
 
+st.set_page_config(page_title='DiscGolf', page_icon=':flying_disc:', layout='wide')
+
 @st.cache_data
 def get_data() -> list[dict]:
     results = EventResults()
