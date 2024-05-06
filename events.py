@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date
-from flask import abort
 from sqlalchemy.engine.row import Row
+from streamlit import balloons, error, success
 
 from models import Country, Event, Player, session, Tournament
 from players import get_all_players_as_classes
@@ -23,24 +23,29 @@ class IncomingEvent:
     def __post_init__(self):
         all_players = get_all_players_as_classes()
         if self.winner_name not in {e.full_name for e in all_players}:
-            abort(406, f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
+            error(f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
+            exit()
         self.winner_id, self.division = next((player.pdga_id, player.division) for player in all_players if self.winner_name == player.full_name)
 
         all_tourneys = get_all_tourneys_as_classes()
         if self.tourney_name not in {e.name for e in all_tourneys}:
-            abort(406, f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
+            error(f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
+            exit()
         self.tourney_id = next(tourney.name for tourney in all_tourneys if self.tourney_name == tourney.name)
 
         all_events: list[Event] = session.query(Event).all()
         for e in all_events:
             if self.tourney_id == e.tourney_id and self.end_date == e.end_date:
-                abort(406, f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
+                error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
+                exit()
 
         if self.governing_body not in {e.governing_body for e in all_events}:
-            abort(406, f"{self.governing_body} is not a legitimate governing body")
+            error(f"{self.governing_body} is not a legitimate governing body")
+            exit()
 
         if self.end_date < self.start_date:
-            abort(406, f"End date cannot be before start date")
+            error(f"End date cannot be before start date")
+            exit()
 
     @property
     def db_dict(self) -> dict:
@@ -50,6 +55,8 @@ class IncomingEvent:
     def create_event(self) -> None:
         session.add(self.db_dict)
         session.commit()
+        success("Successfully added your event to the database")
+        balloons()
 
 
 @dataclass
@@ -86,3 +93,15 @@ class EventResults:
             c = {f'country_{k}': v for k, v in country.k_v.items()}
             event_results.append({**p, **e, **t, **c})
         return event_results
+
+    @property
+    def winners(self) -> list[str]:
+        return sorted({e['player_full_name'] for e in self.event_results_flat if e['player_full_name']})
+
+    @property
+    def tourney_names(self) -> list[str]:
+        return sorted({e['tourney_name'] for e in self.event_results_flat if e['tourney_name']})
+
+    @property
+    def last_added_event(self) -> dict:
+        return sorted([e for e in self.event_results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
