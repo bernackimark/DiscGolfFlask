@@ -1,6 +1,8 @@
+altair
 bs4
 flask
 gunicorn
+pandas
 psycopg2-binary
 python-dotenv
 streamlit
