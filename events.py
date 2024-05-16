@@ -31,13 +31,15 @@ class IncomingEvent:
         if self.tourney_name not in {e.name for e in all_tourneys}:
             error(f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
             exit()
-        self.tourney_id = next(tourney.name for tourney in all_tourneys if self.tourney_name == tourney.name)
+        self.tourney_id = next(tourney.id for tourney in all_tourneys if self.tourney_name == tourney.name)
 
         all_events: list[Event] = session.query(Event).all()
         for e in all_events:
             if self.tourney_id == e.tourney_id and self.end_date == e.end_date:
-                error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
-                exit()
+                existing_division = next(p.division for p in all_players if p.pdga_id == e.winner_id)
+                if self.division == existing_division:
+                    error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
+                    exit()
 
         if self.governing_body not in {e.governing_body for e in all_events}:
             error(f"{self.governing_body} is not a legitimate governing body")
@@ -53,7 +55,7 @@ class IncomingEvent:
                 'end_date': self.end_date, 'winner_id': self.winner_id, 'tourney_id': self.tourney_id}
 
     def create_event(self) -> None:
-        session.add(self.db_dict)
+        session.add(Event(**self.db_dict))
         session.commit()
         success("Successfully added your event to the database")
         balloons()
