@@ -2,12 +2,13 @@ from datetime import date
 import streamlit as st
 
 from events import EventResults, IncomingEvent
-from players import IncomingPlayer, get_last_added_player
+from players import IncomingPlayer, get_last_added_player, get_all_players_as_classes
+from tournaments import get_all_tourneys_as_classes
 
 st.set_page_config(page_title='DG Admin', page_icon=':flying_disc:', layout='wide')
 
-# def unique_sorted_values(key: str) -> list[str]:
-#     return sorted({row[key] for row in data if row[key]})
+all_players: list = sorted({p.full_name for p in get_all_players_as_classes()})
+all_tourneys: list = sorted({t.name for t in get_all_tourneys_as_classes()})
 
 col_add_event, col_add_player = st.columns(2)
 with col_add_event:
@@ -22,8 +23,8 @@ with col_add_event:
         'designation': form_add_event.radio('Designation', ['Standard', 'Elevated', 'Major'], horizontal=True),
         'start_date': form_add_event.date_input('Start Date', value=None),
         'end_date': form_add_event.date_input('End Date', value=None),
-        'winner_name': form_add_event.selectbox('Winner', event_results.winners, index=None),
-        'tourney_name': form_add_event.selectbox('Tournament', event_results.tourney_names, index=None)
+        'winner_name': form_add_event.selectbox('Winner', all_players, index=None),
+        'tourney_name': form_add_event.selectbox('Tournament', all_tourneys, index=None)
     }
     form_add_event_submit = form_add_event.form_submit_button('Add Event')
     if form_add_event_submit:
@@ -32,7 +33,6 @@ with col_add_event:
                 st.error(f'Please fill out {k}')
                 exit()
         event_obj = IncomingEvent(**event)
-        st.write(f'Event Object is: {event_obj}')
         if event_obj:
             event_obj.create_event()
 
@@ -54,6 +54,5 @@ with col_add_player:
                 st.error(f'Please fill out {k}')
                 exit()
         player_obj = IncomingPlayer(**player)
-        st.write(f'Player Object is: {player_obj}')
         if player_obj:
             player_obj.create_player()
