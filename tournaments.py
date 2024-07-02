@@ -18,6 +18,10 @@ def create_tourney(tourney):
     if session.query(Tournament).filter_by(name=name, city=city).one_or_none():
         abort(406, f'{name} in {city} already exists')
 
+    # the primary key isn't auto-incrementing, so this is necessary:
+    max_id = session.query(Tournament).count()
+    tourney['id'] = max_id + 1
+
     session.add(Tournament(**tourney))
     session.commit()
 
