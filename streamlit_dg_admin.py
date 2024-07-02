@@ -11,6 +11,13 @@ st.set_page_config(page_title='DG Admin', page_icon=':flying_disc:', layout='wid
 all_players: list = sorted({p.full_name for p in get_all_players_as_classes()})
 all_tourneys: list = sorted({t.name for t in get_all_tourneys_as_classes()})
 
+def countries_w_flag() -> list[str]:
+    return [f'{k} {v}' for k, v in COUNTRIES_MAP.items()]
+
+def country_from_country_w_flag(country_w_flag: str):
+    return country_w_flag.split(' ')[0]
+
+
 col_add_event, col_add_player = st.columns(2)
 with col_add_event:
     st.header('Add Event')
@@ -64,11 +71,11 @@ with col_add_player:
     tourney = {'name': form_add_tourney.text_input('Name'),
                'city': form_add_tourney.text_input('City'),
                'state': form_add_tourney.text_input('State (US)', max_chars=2),
-               'country': form_add_tourney.selectbox('Country', [f'{k} {v}' for k, v in COUNTRIES_MAP.items()])}
+               'country': form_add_tourney.selectbox('Country', countries_w_flag())}
     form_add_tourney_submit = form_add_tourney.form_submit_button('Add Tournament')
 
     if tourney['country']:
-        tourney['country'] = tourney['country'].split(' ')[0]  # user selection (w flag) -> just country code
+        tourney['country'] = country_from_country_w_flag(tourney['country'])
 
     if form_add_tourney_submit:
         for k, v in tourney.items():
@@ -78,5 +85,5 @@ with col_add_player:
                 else:
                     st.error(f'Please fill out {k}')
                     exit()
-        st.write(tourney['country'])
+
         create_tourney(tourney)
