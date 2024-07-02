@@ -1,9 +1,10 @@
 from datetime import date
 import streamlit as st
 
+from countries import COUNTRIES_MAP
 from events import EventResults, IncomingEvent
 from players import IncomingPlayer, get_last_added_player, get_all_players_as_classes
-from tournaments import get_all_tourneys_as_classes
+from tournaments import create_tourney, get_all_tourneys_as_classes
 
 st.set_page_config(page_title='DG Admin', page_icon=':flying_disc:', layout='wide')
 
@@ -56,3 +57,26 @@ with col_add_player:
         player_obj = IncomingPlayer(**player)
         if player_obj:
             player_obj.create_player()
+
+with col_add_player:
+    st.header('Add Tournament')
+    form_add_tourney = st.form('Add Tournament')
+    tourney = {'name': form_add_tourney.text_input('Name'),
+               'city': form_add_tourney.text_input('City'),
+               'state': form_add_tourney.text_input('State (US)', max_chars=2),
+               'country': form_add_tourney.selectbox('Country', [f'{k} {v}' for k, v in COUNTRIES_MAP.items()])}
+    form_add_tourney_submit = form_add_tourney.form_submit_button('Add Tournament')
+
+    if tourney['country']:
+        tourney['country'] = tourney['country'].split(' ')[0]  # user selection (w flag) -> just country code
+
+    if form_add_tourney_submit:
+        for k, v in tourney.items():
+            if not v:
+                if k == 'state' and tourney.get('country') != 'US':
+                    pass
+                else:
+                    st.error(f'Please fill out {k}')
+                    exit()
+        st.write(tourney['country'])
+        create_tourney(tourney)
