@@ -71,6 +71,8 @@ grouper_map = populate_groupers()
 
 def filter_data(incoming_data: list[dict], filters: dict) -> list[dict]:
     # TODO: Move this to Utilnacki
+    #   add doc string especially re: time_period ... convert this to checking if a filter is a tuple of two dates/dt's
+    #   replace hard-coded event_end_date
     if not filters:
         return incoming_data
     filtered = incoming_data
@@ -86,6 +88,7 @@ def group_data(data, grouper) -> list[dict]:
     """ Returns [{'': Alice, ' ': 5}, {'': Bob, ' ': 3}].  It is ordered by the value descending.
     The keys are blanks because streamlit datatables must have keys, else default column headers are shown. """
     # TODO: the empty string keys are going to be deprecated by Streamlit and are are stupid
+    # TODO: grouper should be a list of groupers
     # TODO: can this be genericized and moved to utilnacki
     # TODO: create a separate rank w ties function & move to utilnacki
     counter = Counter([row[grouper] for row in data if grouper])
@@ -185,5 +188,5 @@ with st.expander('Event Results'):
                      'player_w_flag': 'Winner', 'tourney_name': 'Tournament', 'event_designation_map': 'Designation',
                      'player_division': 'Division', 'tourney_state': 'State', 'tourney_country': 'Country'}
     height = (len(filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
-    st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config,
+    st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config, hide_index=True,
                  use_container_width=True)
