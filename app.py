@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from pathlib import Path
 
-import events
+from events import EventResults
 import players
 
 app = Flask(__name__)
@@ -9,16 +9,29 @@ basedir = Path(__file__).parent.resolve()
 
 @app.route('/')
 def home():
-    return render_template("streamlit.html")
-    # return '<h1>Whats up slappers?</h1>'
+    return '<h1>Whats up slappers?</h1>'
+
+@app.route('/disc_golf')
+def disc_golf():
+    return render_template("disc_golf.html")
+
+@app.route('/dg2')
+def dg_admin():
+    return render_template("dg2.html")
 
 @app.route('/api/players')
 def all_players() -> list[dict]:
     return players.get_all_players()
 
-@app.route('/api/results')
-def all_results() -> list[dict]:
-    return events.get_all_event_results()
+@app.route('/api/event_results_flat')
+def event_results_flat() -> list[dict]:
+    results = EventResults()
+    return results.event_results_flat
+
+@app.route('/api/event_results_nested')
+def event_results() -> list[dict[str, dict]]:
+    results = EventResults()
+    return results.event_results_nested
 
 
 if __name__ == "__main__":
