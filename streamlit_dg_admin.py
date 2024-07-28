@@ -64,6 +64,7 @@ with col_add_player:
         player_obj = IncomingPlayer(**player)
         if player_obj:
             player_obj.create_player()
+            st.rerun()
 
 with col_add_player:
     st.header('Add Tournament')
@@ -87,3 +88,4 @@ with col_add_player:
                     exit()
 
         create_tourney(tourney)
+        st.rerun()
