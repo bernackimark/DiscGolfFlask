@@ -4,7 +4,7 @@ from enum import StrEnum
 from db import get_db_session
 from flask import abort
 from models import Country, Player
-from player_photos import PlayerPhotoUpdater
+from .player_photos import PlayerPhotoUpdater
 from sqlalchemy import update
 from streamlit import balloons, error, success
 
@@ -26,7 +26,6 @@ def get_player(pdga_id: int) -> Player:
 def get_last_added_player() -> dict:
     with get_db_session() as s:
         return s.query(Player).order_by(Player.created_ts.desc()).limit(1).one_or_none().k_v
-        # return s.query(Player).order_by(Player.created_ts.desc()).limit(1).one_or_none().__dict__
 
 class Division(StrEnum):
     MPO = 'MPO'

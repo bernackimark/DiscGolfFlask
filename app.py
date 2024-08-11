@@ -1,8 +1,8 @@
 from flask import Flask, render_template
 from pathlib import Path
 
-from events import EventResults
-import players
+from controller.event import EventResults
+from controller import player
 
 app = Flask(__name__)
 basedir = Path(__file__).parent.resolve()

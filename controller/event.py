@@ -3,11 +3,11 @@ from datetime import date
 
 from db import get_db_session
 from models import Country, Event, Player, Tournament
-from players import get_all_players
+from .player import get_all_players
 from sqlalchemy import desc
 from sqlalchemy.engine.row import Row
 from streamlit import balloons, error, success
-from tournaments import get_all_tourneys
+from .tournament import get_all_tourneys
 
 
 @dataclass

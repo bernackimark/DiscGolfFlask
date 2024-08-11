@@ -1,14 +1,10 @@
 import altair as alt
 from collections import Counter
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import pandas as pd
-import requests
 import streamlit as st
 
-from UI.local_data import local_data
-from countries import COUNTRIES_MAP
-
-from events import EventResults
+from controller.event import EventResults
 
 # DATA_URL = 'https://disc-golf.onrender.com/api/results'
 

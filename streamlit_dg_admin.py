@@ -1,18 +1,23 @@
-from datetime import date, timedelta
-
-from countries import COUNTRIES_MAP
-from events import NewEvent, get_last_added_event
-from players import NewPlayer, get_last_added_player, get_all_players
+from controller.country import get_countries
+from controller.event import NewEvent, get_last_added_event
+from controller.player import NewPlayer, get_last_added_player, get_all_players
+from controller.tournament import create_tourney, get_all_tourneys
 import streamlit as st
-from tournaments import create_tourney, get_all_tourneys
 
 st.set_page_config(page_title='DG Admin', page_icon=':flying_disc:', layout='wide')
 
+@st.cache_data
+def get_all_countries() -> dict:
+    return get_countries()
+
+
+all_countries: dict = get_all_countries()
 all_players: list = sorted({p['full_name'] for p in get_all_players()})
 all_tourneys: list = sorted({t['name'] for t in get_all_tourneys()})
 
+
 def countries_w_flag() -> list[str]:
-    return [f'{k} {v}' for k, v in COUNTRIES_MAP.items()]
+    return [f'{code} {data["flag_emoji"]}' for code, data in all_countries.items()]
 
 def country_from_country_w_flag(country_w_flag: str):
     return country_w_flag.split(' ')[0]
@@ -32,7 +37,7 @@ with col_add_event:
         'tourney_name': form_add_event.selectbox('Tournament', all_tourneys, index=None),
         'city': form_add_event.text_input('City'),
         'state': form_add_event.text_input('State', max_chars=2),
-        'country_code': form_add_event.selectbox('Country', countries_w_flag(), index=240),  # US
+        'country_code': form_add_event.selectbox('Country', countries_w_flag(), index=232),  # US
         'winner_name': form_add_event.selectbox('Winner', all_players, index=None)
     }
     form_add_event_submit = form_add_event.form_submit_button('Add Event')
