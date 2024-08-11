@@ -30,6 +30,11 @@ class Country(Base):
     flag_emoji_code: str = Column(String)
     flag_emoji: str = Column(String)
 
+    @property
+    def k_v(self) -> dict:
+        # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
+        return {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+
 
 class Player(Base):
     __tablename__ = 'dg_player'
