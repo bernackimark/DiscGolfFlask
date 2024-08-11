@@ -1,47 +1,54 @@
 from dataclasses import dataclass, field
 from datetime import date
+
+from db import get_db_session
+from models import Country, Event, Player, Tournament
+from players import get_all_players
+from sqlalchemy import desc
 from sqlalchemy.engine.row import Row
 from streamlit import balloons, error, success
-
-from models import Country, Event, Player, session, Tournament
-from players import get_all_players_as_classes
-from tournaments import get_all_tourneys_as_classes
+from tournaments import get_all_tourneys
 
 
 @dataclass
-class IncomingEvent:
+class NewEvent:
     governing_body: str
     designation: str
     start_date: date
     end_date: date
     winner_name: str
     tourney_name: str
+    city: str
+    state: str
+    country_code: str
     winner_id: int = field(init=False)
     division: str = field(init=False)
     tourney_id: int = field(init=False)
 
     def __post_init__(self):
-        all_players = get_all_players_as_classes()
-        if self.winner_name not in {e.full_name for e in all_players}:
+        all_players = get_all_players()
+        if self.winner_name not in {e['full_name'] for e in all_players}:
             error(f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
             exit()
-        self.winner_id, self.division = next((player.pdga_id, player.division) for player in all_players if self.winner_name == player.full_name)
+        self.winner_id, self.division = next((player['pdga_id'], player['division']) for player in all_players
+                                             if self.winner_name == player['full_name'])
 
-        all_tourneys = get_all_tourneys_as_classes()
-        if self.tourney_name not in {e.name for e in all_tourneys}:
+        all_tourneys = get_all_tourneys()
+        if self.tourney_name not in {e['name'] for e in all_tourneys}:
             error(f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
             exit()
-        self.tourney_id = next(tourney.id for tourney in all_tourneys if self.tourney_name == tourney.name)
+        self.tourney_id = next(tourney['id'] for tourney in all_tourneys if self.tourney_name == tourney['name'])
 
-        all_events: list[Event] = session.query(Event).all()
-        for e in all_events:
-            if self.tourney_id == e.tourney_id and self.end_date == e.end_date:
-                existing_division = next(p.division for p in all_players if p.pdga_id == e.winner_id)
-                if self.division == existing_division:
-                    error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
-                    exit()
+        with get_db_session() as s:
+            all_events: list[dict] = get_all_events()
+            for e in all_events:
+                if self.tourney_name == e['tourney_name'] and self.end_date == e['end_date']:
+                    existing_division = next(p['division'] for p in all_players if p['pdga_id'] == e['winner_id'])
+                    if self.division == existing_division:
+                        error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
+                        exit()
 
-        if self.governing_body not in {e.governing_body for e in all_events}:
+        if self.governing_body not in {e['governing_body'] for e in all_events}:
             error(f"{self.governing_body} is not a legitimate governing body")
             exit()
 
@@ -52,13 +59,15 @@ class IncomingEvent:
     @property
     def db_dict(self) -> dict:
         return {'governing_body': self.governing_body, 'designation': self.designation, 'start_date': self.start_date,
-                'end_date': self.end_date, 'winner_id': self.winner_id, 'tourney_id': self.tourney_id}
+                'end_date': self.end_date, 'winner_id': self.winner_id, 'tourney_id': self.tourney_id,
+                'city': self.city, 'state': self.state, 'country_code': self.country_code}
 
     def create_event(self) -> None:
-        session.add(Event(**self.db_dict))
-        session.commit()
-        success("Successfully added your event to the database")
-        balloons()
+        with get_db_session() as s:
+            s.add(Event(**self.db_dict))
+            s.commit()
+            success("Successfully added your event to the database")
+            balloons()
 
 
 @dataclass
@@ -70,11 +79,12 @@ class EventResults:
 
     @staticmethod
     def _get_all_event_result_data() -> list[Row]:
-        results = (session.query(Player, Event, Tournament, Country).
-                   join(Player, Event.winner_id == Player.pdga_id).
-                   join(Tournament, Event.tourney_id == Tournament.id).
-                   join(Country, Player.country_code == Country.code)).all()
-        return [_ for _ in results]
+        with get_db_session() as s:
+            results = (s.query(Player, Event, Tournament, Country).
+                       join(Player, Event.winner_id == Player.pdga_id).
+                       join(Tournament, Event.tourney_id == Tournament.id).
+                       join(Country, Player.country_code == Country.code)).all()
+            return [_ for _ in results]
 
     @property
     def event_results_nested(self) -> list[dict[str, dict]]:
@@ -107,3 +117,17 @@ class EventResults:
     @property
     def last_added_event(self) -> dict:
         return sorted([e for e in self.event_results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
+
+
+def get_all_events() -> list[dict]:
+    with get_db_session() as s:
+        events = s.query(Event).all()
+        return [e.k_v for e in events]
+
+def get_last_added_event() -> tuple[str, date]:
+    """Used to support dg_admin, which only needs to see the last event"""
+    with get_db_session() as s:
+        e = s.query(Event).order_by(desc(Event.created_ts)).first()
+        tourney_name = e.tourney.name
+        tourney_end_date = e.end_date
+        return tourney_name, tourney_end_date

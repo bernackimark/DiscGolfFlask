@@ -1,34 +1,22 @@
-from datetime import date, datetime
-from dotenv import load_dotenv
-import os
-from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
-from typing import Optional
+from datetime import date
 
-load_dotenv('.env')
-DB_CONN_STR = os.getenv('DB_PROD_CONN_STR')
-engine = create_engine(DB_CONN_STR)
-Session = sessionmaker(bind=engine)
-session = Session()
+from db import engine
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import declarative_base, relationship
 
-# conn: sqlalchemy.future.Connection = engine.connect()
-
-# def db_query(query: str, params: list[dict] = None) -> list[dict]:
-#     with engine.connect() as conn:
-#         result = conn.execute(text(query), params if params else [])
-#         return [dict(r) for r in result.mappings()]
-
-class Base(DeclarativeBase):
-    created_ts: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    lmt: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+Base = declarative_base()
 
 class Tournament(Base):
+    """A tournament is just a name. It is a type 2 slowly-changing dimension
+    allows the name to morph but still keep the same parent_id"""
     __tablename__ = 'dg_tourney'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    city: Mapped[str]
-    state: Mapped[Optional[str]]
-    country: Mapped[str]
+    id: int = Column(Integer, primary_key=True)
+    parent_id: int = Column(Integer)
+    name: str = Column(String)
+    effective_date: date = Column(Date)
+    expiry_date: date = Column(Date, default=None)
+    created_ts = Column(DateTime, default=func.now())
+    lmt = Column(DateTime, default=func.now(), onupdate=func.now())
 
     @property
     def k_v(self) -> dict:
@@ -37,24 +25,23 @@ class Tournament(Base):
 
 class Country(Base):
     __tablename__ = 'country'
-    code: Mapped[str] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    flag_emoji: Mapped[str]
-
-    @property
-    def k_v(self) -> dict:
-        # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
-        return {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+    code: str = Column(String, primary_key=True)
+    name: str = Column(String)
+    flag_emoji_code: str = Column(String)
+    flag_emoji: str = Column(String)
 
 
 class Player(Base):
     __tablename__ = 'dg_player'
-    pdga_id: Mapped[int] = mapped_column(primary_key=True)
-    first_name: Mapped[str]
-    last_name: Mapped[str]
-    division: Mapped[str]
-    photo_url: Mapped[Optional[str]]
-    country_code: Mapped[Optional[str]] = mapped_column(String, ForeignKey('country.code'))
+    pdga_id: int = Column(Integer, primary_key=True)
+    first_name: str = Column(String)
+    last_name: str = Column(String)
+    division: str = Column(String)
+    photo_url: str = Column(String, default=None)
+    country_code: str = Column(String, ForeignKey('country.code'))
+    created_ts = Column(DateTime, default=func.now())
+    lmt = Column(DateTime, default=func.now(), onupdate=func.now())
+    country = relationship("Country")
 
     @property
     def full_name(self) -> str:
@@ -70,13 +57,20 @@ class Player(Base):
 
 class Event(Base):
     __tablename__ = 'dg_event'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    governing_body: Mapped[str]
-    designation: Mapped[str]
-    start_date: Mapped[date]
-    end_date: Mapped[date]
-    winner_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dg_player.pdga_id'))
-    tourney_id: Mapped[int] = mapped_column(Integer, ForeignKey('dg_tourney.id'))
+    id: int = Column(Integer, primary_key=True)
+    governing_body: str = Column(String)
+    designation: str = Column(String)
+    start_date: date = Column(Date)
+    end_date: date = Column(Date)
+    winner_id: int = Column(Integer, ForeignKey('dg_player.pdga_id'))
+    tourney_id: int = Column(Integer, ForeignKey('dg_tourney.id'))
+    city: str = Column(String, nullable=True)
+    state: str = Column(String, nullable=True)
+    country_code: str = Column(String, ForeignKey('country.code'))
+    created_ts = Column(DateTime, default=func.now())
+    lmt = Column(DateTime, default=func.now(), onupdate=func.now())
+    tourney = relationship("Tournament")
+    winner = relationship('Player')
 
     @property
     def year(self) -> int:
@@ -87,8 +81,13 @@ class Event(Base):
         # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
         instance_dict = {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
         instance_dict['year'] = self.year
+        instance_dict['tourney_name'] = self.tourney.name
         return instance_dict
 
 
-# Create the database tables
-# Base.metadata.create_all(engine)
+if __name__ == '__main__':
+    if input('Are you sure you want to drop and create these tables? (Y/n) ') == 'Y':
+        # Create the database tables
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
+        print('Tables dropped and recreated')

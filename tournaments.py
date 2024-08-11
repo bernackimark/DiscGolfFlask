@@ -1,27 +1,41 @@
-from flask import abort
+from datetime import date
 
-from models import Tournament, session
+from db import get_db_session
+from flask import abort
+from models import Tournament
+from sqlalchemy import desc
+from streamlit import balloons, success
 
 def get_all_tourneys() -> list[dict]:
-    results = session.query(Tournament).all()
-    return [e.__dict__ for e in results]
+    with get_db_session() as s:
+        results = s.query(Tournament).all()
+        return [e.k_v for e in results]
 
 def get_all_tourneys_as_classes() -> list[Tournament]:
-    return [_ for _ in session.query(Tournament).all()]
+    with get_db_session() as s:
+        return [_ for _ in s.query(Tournament).all()]
 
 def get_tourney(name: str) -> list[Tournament]:
-    tourney = session.query(Tournament).filter_by(name=name).all()
-    return tourney or abort(404, f'Tournament named {name} not found')
+    with get_db_session() as s:
+        tourney = s.query(Tournament).filter_by(name=name).all()
+        return tourney or abort(404, f'Tournament named {name} not found')
 
 def create_tourney(tourney):
-    name, city = tourney.get('name'), tourney.get('city')
-    if session.query(Tournament).filter_by(name=name, city=city).one_or_none():
-        abort(406, f'{name} in {city} already exists')
+    # TODO: re-write to accommodate parent_id/expiry concepts
 
-    # the primary key isn't auto-incrementing, so this is necessary:
-    max_id = session.query(Tournament).count()
-    tourney['id'] = max_id + 1
+    with get_db_session() as s:
+        name = tourney.get('name')
+        if s.query(Tournament).filter_by(name=name).one_or_none():
+            abort(406, f'{name} already exists')
 
-    session.add(Tournament(**tourney))
-    session.commit()
+        max_parent_id_row = s.query(Tournament).order_by(desc(Tournament.parent_id)).first()
+        tourney['parent_id'] = max_parent_id_row.id + 1
+        tourney['effective_date'] = date(date.today().year, 1, 1)
 
+        s.add(Tournament(**tourney))
+        s.commit()
+        success("Successfully added your tournament to the database")
+        balloons()
+
+def update_tourney(tourney):
+    ...

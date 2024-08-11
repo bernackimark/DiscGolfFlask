@@ -1,0 +1,249 @@
+AD :flag-ad: 🇦🇩 Andorra
+AE :flag-ae: 🇦🇪 United Arab Emirates
+AF :flag-af: 🇦🇫 Afghanistan
+AG :flag-ag: 🇦🇬 Antigua and Barbuda
+AI :flag-ai: 🇦🇮 Anguilla
+AL :flag-al: 🇦🇱 Albania
+AM :flag-am: 🇦🇲 Armenia
+AO :flag-ao: 🇦🇴 Angola
+AQ :flag-aq: 🇦🇶 Antarctica
+AR :flag-ar: 🇦🇷 Argentina
+AS :flag-as: 🇦🇸 American Samoa
+AT :flag-at: 🇦🇹 Austria
+AU :flag-au: 🇦🇺 Australia
+AW :flag-aw: 🇦🇼 Aruba
+AX :flag-ax: 🇦🇽 Åland Islands
+AZ :flag-az: 🇦🇿 Azerbaijan
+BA :flag-ba: 🇧🇦 Bosnia and Herzegovina
+BB :flag-bb: 🇧🇧 Barbados
+BD :flag-bd: 🇧🇩 Bangladesh
+BE :flag-be: 🇧🇪 Belgium
+BF :flag-bf: 🇧🇫 Burkina Faso
+BG :flag-bg: 🇧🇬 Bulgaria
+BH :flag-bh: 🇧🇭 Bahrain
+BI :flag-bi: 🇧🇮 Burundi
+BJ :flag-bj: 🇧🇯 Benin
+BL :flag-bl: 🇧🇱 Saint Barthélemy
+BM :flag-bm: 🇧🇲 Bermuda
+BN :flag-bn: 🇧🇳 Brunei Darussalam
+BO :flag-bo: 🇧🇴 Bolivia
+BQ :flag-bq: 🇧🇶 Bonaire, Sint Eustatius and Saba
+BR :flag-br: 🇧🇷 Brazil
+BS :flag-bs: 🇧🇸 Bahamas
+BT :flag-bt: 🇧🇹 Bhutan
+BV :flag-bv: 🇧🇻 Bouvet Island
+BW :flag-bw: 🇧🇼 Botswana
+BY :flag-by: 🇧🇾 Belarus
+BZ :flag-bz: 🇧🇿 Belize
+CA :flag-ca: 🇨🇦 Canada
+CC :flag-cc: 🇨🇨 Cocos (Keeling) Islands
+CD :flag-cd: 🇨🇩 Congo
+CF :flag-cf: 🇨🇫 Central African Republic
+CG :flag-cg: 🇨🇬 Congo
+CH :flag-ch: 🇨🇭 Switzerland
+CI :flag-ci: 🇨🇮 Côte D'Ivoire
+CK :flag-ck: 🇨🇰 Cook Islands
+CL :flag-cl: 🇨🇱 Chile
+CM :flag-cm: 🇨🇲 Cameroon
+CN :flag-cn: 🇨🇳 China
+CO :flag-co: 🇨🇴 Colombia
+CR :flag-cr: 🇨🇷 Costa Rica
+CU :flag-cu: 🇨🇺 Cuba
+CV :flag-cv: 🇨🇻 Cape Verde
+CW :flag-cw: 🇨🇼 Curaçao
+CX :flag-cx: 🇨🇽 Christmas Island
+CY :flag-cy: 🇨🇾 Cyprus
+CZ :flag-cz: 🇨🇿 Czech Republic
+DE :flag-de: 🇩🇪 Germany
+DJ :flag-dj: 🇩🇯 Djibouti
+DK :flag-dk: 🇩🇰 Denmark
+DM :flag-dm: 🇩🇲 Dominica
+DO :flag-do: 🇩🇴 Dominican Republic
+DZ :flag-dz: 🇩🇿 Algeria
+EC :flag-ec: 🇪🇨 Ecuador
+EE :flag-ee: 🇪🇪 Estonia
+EG :flag-eg: 🇪🇬 Egypt
+EH :flag-eh: 🇪🇭 Western Sahara
+ER :flag-er: 🇪🇷 Eritrea
+ES :flag-es: 🇪🇸 Spain
+ET :flag-et: 🇪🇹 Ethiopia
+FI :flag-fi: 🇫🇮 Finland
+FJ :flag-fj: 🇫🇯 Fiji
+FK :flag-fk: 🇫🇰 Falkland Islands (Malvinas)
+FM :flag-fm: 🇫🇲 Micronesia
+FO :flag-fo: 🇫🇴 Faroe Islands
+FR :flag-fr: 🇫🇷 France
+GA :flag-ga: 🇬🇦 Gabon
+GB :flag-gb: 🇬🇧 United Kingdom
+GD :flag-gd: 🇬🇩 Grenada
+GE :flag-ge: 🇬🇪 Georgia
+GF :flag-gf: 🇬🇫 French Guiana
+GG :flag-gg: 🇬🇬 Guernsey
+GH :flag-gh: 🇬🇭 Ghana
+GI :flag-gi: 🇬🇮 Gibraltar
+GL :flag-gl: 🇬🇱 Greenland
+GM :flag-gm: 🇬🇲 Gambia
+GN :flag-gn: 🇬🇳 Guinea
+GP :flag-gp: 🇬🇵 Guadeloupe
+GQ :flag-gq: 🇬🇶 Equatorial Guinea
+GR :flag-gr: 🇬🇷 Greece
+GS :flag-gs: 🇬🇸 South Georgia
+GT :flag-gt: 🇬🇹 Guatemala
+GU :flag-gu: 🇬🇺 Guam
+GW :flag-gw: 🇬🇼 Guinea-Bissau
+GY :flag-gy: 🇬🇾 Guyana
+HK :flag-hk: 🇭🇰 Hong Kong
+HM :flag-hm: 🇭🇲 Heard Island and Mcdonald Islands
+HN :flag-hn: 🇭🇳 Honduras
+HR :flag-hr: 🇭🇷 Croatia
+HT :flag-ht: 🇭🇹 Haiti
+HU :flag-hu: 🇭🇺 Hungary
+ID :flag-id: 🇮🇩 Indonesia
+IE :flag-ie: 🇮🇪 Ireland
+IL :flag-il: 🇮🇱 Israel
+IM :flag-im: 🇮🇲 Isle of Man
+IN :flag-in: 🇮🇳 India
+IO :flag-io: 🇮🇴 British Indian Ocean Territory
+IQ :flag-iq: 🇮🇶 Iraq
+IR :flag-ir: 🇮🇷 Iran
+IS :flag-is: 🇮🇸 Iceland
+IT :flag-it: 🇮🇹 Italy
+JE :flag-je: 🇯🇪 Jersey
+JM :flag-jm: 🇯🇲 Jamaica
+JO :flag-jo: 🇯🇴 Jordan
+JP :flag-jp: 🇯🇵 Japan
+KE :flag-ke: 🇰🇪 Kenya
+KG :flag-kg: 🇰🇬 Kyrgyzstan
+KH :flag-kh: 🇰🇭 Cambodia
+KI :flag-ki: 🇰🇮 Kiribati
+KM :flag-km: 🇰🇲 Comoros
+KN :flag-kn: 🇰🇳 Saint Kitts and Nevis
+KP :flag-kp: 🇰🇵 North Korea
+KR :flag-kr: 🇰🇷 South Korea
+KW :flag-kw: 🇰🇼 Kuwait
+KY :flag-ky: 🇰🇾 Cayman Islands
+KZ :flag-kz: 🇰🇿 Kazakhstan
+LA :flag-la: 🇱🇦 Lao People's Democratic Republic
+LB :flag-lb: 🇱🇧 Lebanon
+LC :flag-lc: 🇱🇨 Saint Lucia
+LI :flag-li: 🇱🇮 Liechtenstein
+LK :flag-lk: 🇱🇰 Sri Lanka
+LR :flag-lr: 🇱🇷 Liberia
+LS :flag-ls: 🇱🇸 Lesotho
+LT :flag-lt: 🇱🇹 Lithuania
+LU :flag-lu: 🇱🇺 Luxembourg
+LV :flag-lv: 🇱🇻 Latvia
+LY :flag-ly: 🇱🇾 Libya
+MA :flag-ma: 🇲🇦 Morocco
+MC :flag-mc: 🇲🇨 Monaco
+MD :flag-md: 🇲🇩 Moldova
+ME :flag-me: 🇲🇪 Montenegro
+MF :flag-mf: 🇲🇫 Saint Martin (French Part)
+MG :flag-mg: 🇲🇬 Madagascar
+MH :flag-mh: 🇲🇭 Marshall Islands
+MK :flag-mk: 🇲🇰 Macedonia
+ML :flag-ml: 🇲🇱 Mali
+MM :flag-mm: 🇲🇲 Myanmar
+MN :flag-mn: 🇲🇳 Mongolia
+MO :flag-mo: 🇲🇴 Macao
+MP :flag-mp: 🇲🇵 Northern Mariana Islands
+MQ :flag-mq: 🇲🇶 Martinique
+MR :flag-mr: 🇲🇷 Mauritania
+MS :flag-ms: 🇲🇸 Montserrat
+MT :flag-mt: 🇲🇹 Malta
+MU :flag-mu: 🇲🇺 Mauritius
+MV :flag-mv: 🇲🇻 Maldives
+MW :flag-mw: 🇲🇼 Malawi
+MX :flag-mx: 🇲🇽 Mexico
+MY :flag-my: 🇲🇾 Malaysia
+MZ :flag-mz: 🇲🇿 Mozambique
+NA :flag-na: 🇳🇦 Namibia
+NC :flag-nc: 🇳🇨 New Caledonia
+NE :flag-ne: 🇳🇪 Niger
+NF :flag-nf: 🇳🇫 Norfolk Island
+NG :flag-ng: 🇳🇬 Nigeria
+NI :flag-ni: 🇳🇮 Nicaragua
+NL :flag-nl: 🇳🇱 Netherlands
+NO :flag-no: 🇳🇴 Norway
+NP :flag-np: 🇳🇵 Nepal
+NR :flag-nr: 🇳🇷 Nauru
+NU :flag-nu: 🇳🇺 Niue
+NZ :flag-nz: 🇳🇿 New Zealand
+OM :flag-om: 🇴🇲 Oman
+PA :flag-pa: 🇵🇦 Panama
+PE :flag-pe: 🇵🇪 Peru
+PF :flag-pf: 🇵🇫 French Polynesia
+PG :flag-pg: 🇵🇬 Papua New Guinea
+PH :flag-ph: 🇵🇭 Philippines
+PK :flag-pk: 🇵🇰 Pakistan
+PL :flag-pl: 🇵🇱 Poland
+PM :flag-pm: 🇵🇲 Saint Pierre and Miquelon
+PN :flag-pn: 🇵🇳 Pitcairn
+PR :flag-pr: 🇵🇷 Puerto Rico
+PS :flag-ps: 🇵🇸 Palestinian Territory
+PT :flag-pt: 🇵🇹 Portugal
+PW :flag-pw: 🇵🇼 Palau
+PY :flag-py: 🇵🇾 Paraguay
+QA :flag-qa: 🇶🇦 Qatar
+RE :flag-re: 🇷🇪 Réunion
+RO :flag-ro: 🇷🇴 Romania
+RS :flag-rs: 🇷🇸 Serbia
+RU :flag-ru: 🇷🇺 Russia
+RW :flag-rw: 🇷🇼 Rwanda
+SA :flag-sa: 🇸🇦 Saudi Arabia
+SB :flag-sb: 🇸🇧 Solomon Islands
+SC :flag-sc: 🇸🇨 Seychelles
+SD :flag-sd: 🇸🇩 Sudan
+SE :flag-se: 🇸🇪 Sweden
+SG :flag-sg: 🇸🇬 Singapore
+SH :flag-sh: 🇸🇭 Saint Helena, Ascension and Tristan Da Cunha
+SI :flag-si: 🇸🇮 Slovenia
+SJ :flag-sj: 🇸🇯 Svalbard and Jan Mayen
+SK :flag-sk: 🇸🇰 Slovakia
+SL :flag-sl: 🇸🇱 Sierra Leone
+SM :flag-sm: 🇸🇲 San Marino
+SN :flag-sn: 🇸🇳 Senegal
+SO :flag-so: 🇸🇴 Somalia
+SR :flag-sr: 🇸🇷 Suriname
+SS :flag-ss: 🇸🇸 South Sudan
+ST :flag-st: 🇸🇹 Sao Tome and Principe
+SV :flag-sv: 🇸🇻 El Salvador
+SX :flag-sx: 🇸🇽 Sint Maarten (Dutch Part)
+SY :flag-sy: 🇸🇾 Syrian Arab Republic
+SZ :flag-sz: 🇸🇿 Swaziland
+TC :flag-tc: 🇹🇨 Turks and Caicos Islands
+TD :flag-td: 🇹🇩 Chad
+TF :flag-tf: 🇹🇫 French Southern Territories
+TG :flag-tg: 🇹🇬 Togo
+TH :flag-th: 🇹🇭 Thailand
+TJ :flag-tj: 🇹🇯 Tajikistan
+TK :flag-tk: 🇹🇰 Tokelau
+TL :flag-tl: 🇹🇱 Timor-Leste
+TM :flag-tm: 🇹🇲 Turkmenistan
+TN :flag-tn: 🇹🇳 Tunisia
+TO :flag-to: 🇹🇴 Tonga
+TR :flag-tr: 🇹🇷 Turkey
+TT :flag-tt: 🇹🇹 Trinidad and Tobago
+TV :flag-tv: 🇹🇻 Tuvalu
+TW :flag-tw: 🇹🇼 Taiwan
+TZ :flag-tz: 🇹🇿 Tanzania
+UA :flag-ua: 🇺🇦 Ukraine
+UG :flag-ug: 🇺🇬 Uganda
+UM :flag-um: 🇺🇲 United States Minor Outlying Islands
+US :flag-us: 🇺🇸 United States
+UY :flag-uy: 🇺🇾 Uruguay
+UZ :flag-uz: 🇺🇿 Uzbekistan
+VA :flag-va: 🇻🇦 Vatican City
+VC :flag-vc: 🇻🇨 Saint Vincent and The Grenadines
+VE :flag-ve: 🇻🇪 Venezuela
+VG :flag-vg: 🇻🇬 Virgin Islands, British
+VI :flag-vi: 🇻🇮 Virgin Islands, U.S.
+VN :flag-vn: 🇻🇳 Viet Nam
+VU :flag-vu: 🇻🇺 Vanuatu
+WF :flag-wf: 🇼🇫 Wallis and Futuna
+WS :flag-ws: 🇼🇸 Samoa
+YE :flag-ye: 🇾🇪 Yemen
+YT :flag-yt: 🇾🇹 Mayotte
+ZA :flag-za: 🇿🇦 South Africa
+ZM :flag-zm: 🇿🇲 Zambia
+ZW :flag-zw: 🇿🇼 Zimbabwe
