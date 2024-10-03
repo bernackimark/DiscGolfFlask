@@ -1,6 +1,7 @@
 from controller.country import get_countries
 from controller.event import NewEvent, get_last_added_event
 from controller.player import NewPlayer, get_last_added_player, get_all_players
+from controller.player_scrape_pdga_id import scrape_id_and_country
 from controller.tournament import create_tourney, get_all_tourneys
 import streamlit as st
 
@@ -55,25 +56,48 @@ with col_add_event:
             event_obj.create_event()
 
 with col_add_player:
+    st.header('Lookup PDGA #')
+    form_player_lookup = st.form('Lookup PDGA#')
+    co_first, co_last = form_player_lookup.columns(2)
+    first = co_first.text_input('First Name')
+    last = co_last.text_input('Last Name')
+    co_btn, co_pdga_id, co_country = form_player_lookup.columns([2, 1, 1])
+    btn_search = co_btn.form_submit_button('Search')
+    pdga_id, country = None, None
+    if btn_search:
+        if scrape_id_and_country(first, last):
+            pdga_id, country = scrape_id_and_country(first, last)
+            co_pdga_id.subheader(pdga_id)
+            co_country.subheader(country)
+        else:
+            co_country.subheader('No player found')
+
+with col_add_player:
     st.header('Add Player')
     last_add = get_last_added_player()
     st.caption(f"The last player added was {last_add['full_name']} on {last_add['created_ts'].date()}")
+
     form_add_player = st.form('Add Player')
-    player = {'pdga_id': form_add_player.number_input('PDGA #', min_value=1, max_value=1000000, format='%d'),
-              'first_name': form_add_player.text_input('First Name'),
-              'last_name': form_add_player.text_input('Last Name'),
+    co1, co2, co3 = form_add_player.columns([2, 2, 2])
+    player = {'pdga_id': co1.number_input('PDGA #', min_value=1, max_value=1000000, format='%d'),
+              'first_name': co2.text_input('First Name', value=first if first else None),
+              'last_name': co3.text_input('Last Name', value=last if last else None),
               'division': form_add_player.radio('Dvision', ['MPO', 'FPO'], horizontal=True),
               'photo_url': form_add_player.text_input('Photo URL (presently unsupported)', disabled=True),
               'country_code': form_add_player.text_input('Country Code (two-digit)', max_chars=2)}
+
     form_add_player_submit = form_add_player.form_submit_button('Add Player')
     if form_add_player_submit:
         for k, v in player.items():
             if k != 'photo_url' and not v:
                 st.error(f'Please fill out {k}')
                 exit()
-
+            if k == 'pdga_id' and v <= 1:
+                st.error(f'Please enter a valid PDGA #')
+                exit()
         NewPlayer(**player)
         st.rerun()
+
 
 with col_add_player:
     st.header('Add Tournament')
