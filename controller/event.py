@@ -72,51 +72,47 @@ class NewEvent:
 
 @dataclass
 class EventResults:
-    results: list[Row] = field(init=False)
+    results: list[dict[str: dict]] = field(init=False)
 
     def __post_init__(self):
         self.results = self._get_all_event_result_data()
 
     @staticmethod
-    def _get_all_event_result_data() -> list[Row]:
+    def _get_all_event_result_data() -> list[dict[str: dict]]:
+        """ Returns a list of nested dictionaries
+        {'event': {'end_date': ...}, 'player': {'full_name': ...}}"""
         with get_db_session() as s:
             results = (s.query(Player, Event, Tournament, Country).
                        join(Player, Event.winner_id == Player.pdga_id).
                        join(Tournament, Event.tourney_id == Tournament.id).
                        join(Country, Player.country_code == Country.code)).all()
-            return [_ for _ in results]
+            return [{'event': event.k_v, 'player': player.k_v, 'country': country.k_v, 'tourney': tourney.k_v}
+                    for player, event, tourney, country in results]
 
     @property
-    def event_results_nested(self) -> list[dict[str, dict]]:
-        """ Returns a list of nested dictionaries
-        {'event': {'end_date': ...}, 'player': {'full_name': ...}}"""
-        return [{'event': event.k_v, 'player': player.k_v, 'country': country.k_v, 'tourney': tourney.k_v}
-                for player, event, tourney, country in self.results]
-
-    @property
-    def event_results_flat(self) -> list[dict]:
+    def results_flat(self) -> list[dict]:
         """ Returns a single flattened dictionary for each event result.
         Because tables may have the same column names, fully qualify the keys as table_{db_col}"""
-        event_results = []
-        for player, event, tourney, country in self.results:
-            p = {f'player_{k}': v for k, v in player.k_v.items()}
-            e = {f'event_{k}': v for k, v in event.k_v.items()}
-            t = {f'tourney_{k}': v for k, v in tourney.k_v.items()}
-            c = {f'country_{k}': v for k, v in country.k_v.items()}
-            event_results.append({**p, **e, **t, **c})
-        return event_results
+        flattened = []
+        for event in self.results:
+            new_event = {}
+            for parent_key, data in event.items():
+                for k, v in data.items():
+                    new_event[f'{parent_key}_{k}'] = v
+            flattened.append(new_event)
+        return flattened
 
     @property
     def winners(self) -> list[str]:
-        return sorted({e['player_full_name'] for e in self.event_results_flat if e['player_full_name']})
+        return sorted({e['player_full_name'] for e in self.results_flat if e['player_full_name']})
 
     @property
     def tourney_names(self) -> list[str]:
-        return sorted({e['tourney_name'] for e in self.event_results_flat if e['tourney_name']})
+        return sorted({e['tourney_name'] for e in self.results_flat if e['tourney_name']})
 
     @property
     def last_added_event(self) -> dict:
-        return sorted([e for e in self.event_results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
+        return sorted([e for e in self.results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
 
 
 def get_all_events() -> list[dict]:
