@@ -76,6 +76,7 @@ class Event(Base):
     lmt = Column(DateTime, default=func.now(), onupdate=func.now())
     tourney = relationship("Tournament")
     winner = relationship('Player')
+    country = relationship('Country')
 
     @property
     def year(self) -> int:
@@ -87,6 +88,7 @@ class Event(Base):
         instance_dict = {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
         instance_dict['year'] = self.year
         instance_dict['tourney_name'] = self.tourney.name
+        instance_dict['country_name'] = self.country.name
         return instance_dict
 
 
