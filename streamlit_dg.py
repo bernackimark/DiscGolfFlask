@@ -1,24 +1,13 @@
 import altair as alt
 from collections import Counter
-from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
+from utilnacki.dates import TIME_PERIODS
 
 from controller.event import EventResults
 
-# DATA_URL = 'https://disc-golf.onrender.com/api/results'
+# DATA_URL = 'https://disc-golf.onrender.com/api/results_flat'
 
-MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE = date(1900, 1, 1), date(2099, 12, 31)
-TODAY = date.today()
-# TODO: utilnacki
-TIME_PERIODS = {
-    'Last 30 Days': (TODAY - timedelta(days=30), TODAY),
-    'Last Month': ((TODAY.replace(day=1) - timedelta(days=1)).replace(day=1), TODAY.replace(day=1) - timedelta(days=1)),
-    'This Year': (date(TODAY.year, 1, 1), TODAY),
-    'Last Year': (date(TODAY.year - 1, 1, 1), TODAY.replace(month=1, day=1) - timedelta(days=1)),
-    'Last 365 Days': (TODAY - timedelta(days=365), TODAY),
-    'All Time (DGPT Era)': (MIN_POSSIBLE_DATE, MAX_POSSIBLE_DATE)
-}
 TABLE_ROW_HEIGHT = 36
 
 st.set_page_config(page_title='Bernacki DiscGolf', page_icon=':flying_disc:', layout='wide')
@@ -26,7 +15,7 @@ st.set_page_config(page_title='Bernacki DiscGolf', page_icon=':flying_disc:', la
 @st.cache_data
 def get_data() -> list[dict]:
     results = EventResults()
-    return results.event_results_flat
+    return results.results_flat
 
 
 def clean_data(dirty_data: list[dict]) -> list[dict]:
@@ -51,12 +40,12 @@ def unique_sorted_values(key: str) -> list[str]:
 
 def populate_filters() -> dict:
     filter_elements = ['player_w_flag', 'country_w_flag', 'player_division', 'event_designation_map', 'tourney_name',
-                       'tourney_state', 'tourney_country']
+                       'event_state', 'event_country_name']
     return {e: unique_sorted_values(e) for e in filter_elements}
 
 def populate_groupers() -> dict:
     # TODO: can I separate key from display label, maybe using list.index() like in the each v cumulative radio?
-    grouper_elements = ['player_w_flag', 'tourney_name', 'tourney_state', 'tourney_country',
+    grouper_elements = ['player_w_flag', 'tourney_name', 'event_state', 'event_country_name',
                         'event_designation_map', 'event_year']
     return {'event_grouper': grouper_elements}
 
@@ -91,6 +80,10 @@ def group_data(data, grouper) -> list[dict]:
     return sorted([{'': k, ' ': v} for k, v in counter.items()], key=lambda x: x[' '], reverse=True)
 
 
+# TODO: All of the above is a pipeline.  How can I create a genericized class/ABC, where I can feed it the necessary
+#  flattened data, groupers, filters
+
+
 # FILTER & GROUP THE DATA
 # Sidebar
 with st.sidebar:
@@ -110,8 +103,8 @@ with st.sidebar:
 
     # Place state & country side-by-side sidebar into two columns
     col1, col2 = st.sidebar.columns(2)
-    selected_tournament_states = col1.multiselect('State', filter_map['tourney_state'])
-    selected_tournament_countries = col2.multiselect('Country', filter_map['tourney_country'])
+    selected_tournament_states = col1.multiselect('State', filter_map['event_state'])
+    selected_tournament_countries = col2.multiselect('Country', filter_map['event_country_name'])
 
     selected_time_period = st.sidebar.selectbox('Time Period', list(TIME_PERIODS.keys()), index=5)
     start_date, end_date = TIME_PERIODS[selected_time_period]
@@ -120,8 +113,8 @@ with st.sidebar:
 filters = {
     "player_w_flag": selected_players, "country_w_flag": selected_player_countries,
     "tourney_name": selected_tournament_names, "player_division": selected_divisions,
-    "event_designation_map": selected_designations, "tourney_state": selected_tournament_states,
-    "tourney_country": selected_tournament_countries, "time_period": (start_date, end_date)}
+    "event_designation_map": selected_designations, "event_state": selected_tournament_states,
+    "event_country_name": selected_tournament_countries, "time_period": (start_date, end_date)}
 
 filtered_data: list[dict] = filter_data(data, filters)
 grouped_data: list[dict] = group_data(filtered_data, selected_grouper)
@@ -179,10 +172,10 @@ with st.container():
 # Table
 with st.expander('Event Results'):
     column_order = ['event_year', 'player_w_flag', 'tourney_name', 'event_designation_map',
-                    'player_division', 'tourney_state', 'tourney_country']
+                    'player_division', 'event_state', 'event_country_name']
     column_config = {'event_year': st.column_config.NumberColumn('Year', format='%d'),
                      'player_w_flag': 'Winner', 'tourney_name': 'Tournament', 'event_designation_map': 'Designation',
-                     'player_division': 'Division', 'tourney_state': 'State', 'tourney_country': 'Country'}
+                     'player_division': 'Division', 'event_state': 'State', 'event_country_name': 'Country'}
     height = (len(filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
     st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config, hide_index=True,
                  use_container_width=True)
