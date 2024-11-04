@@ -21,17 +21,17 @@ def dg_admin():
 
 @app.route('/api/players')
 def all_players() -> list[dict]:
-    return players.get_all_players()
+    return player.get_all_players()
 
-@app.route('/api/event_results_flat')
+@app.route('/api/results_flat')
 def event_results_flat() -> list[dict]:
     results = EventResults()
-    return results.event_results_flat
+    return results.results_flat
 
-@app.route('/api/event_results_nested')
-def event_results() -> list[dict[str, dict]]:
+@app.route('/api/event_results')
+def event_results() -> list[dict[str: dict]]:
     results = EventResults()
-    return results.event_results_nested
+    return results.results
 
 
 if __name__ == "__main__":
