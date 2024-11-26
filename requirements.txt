@@ -1,13 +1,13 @@
 altair~=5.3.0
 bs4~=0.0.2
 flask~=3.0.3
-gunicorn
+gunicorn==22.0.0
+matplotlib==3.9.2
 pandas~=2.2.2
 psycopg2-binary
 python-dotenv~=1.0.1
 streamlit~=1.37.1
 SQLAlchemy~=2.0.29
-
-requests~=2.31.0
+requests~=2.32.0
 beautifulsoup4~=4.12.3
 utilnacki~=0.0.1
