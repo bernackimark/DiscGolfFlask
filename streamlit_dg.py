@@ -1,13 +1,13 @@
-import altair as alt
 from collections import Counter, defaultdict
 from datetime import date
+import time
+
+import altair as alt
+from controller.event import EventResults
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
-import time
 from utilnacki.dates import TIME_PERIODS
-
-from controller.event import EventResults
 
 # DATA_URL = 'https://disc-golf.onrender.com/api/results_flat'
 
@@ -41,7 +41,7 @@ class StreamlitData:
                            'Elite': 'Standard', 'DGPT Undesignated': 'Standard', 'Silver': 'Standard'}
         cleaned_data = []
         for row in self._dirty_data:
-            # create some columns, including the flag emoji
+            # create/clean/map some columns
             row['player_w_flag'] = f"{row['player_full_name']}  {row['country_flag_emoji']}"
             row['country_w_flag'] = f"{row['country_name']}  {row['country_flag_emoji']}"
             row['event_state'] = '' if not row['event_state'] else row['event_state']
@@ -59,19 +59,22 @@ class StreamlitData:
                     filter_dropdowns[k].add(v)
         return {k: sorted(v, key=lambda x: (x is None, x)) for k, v in filter_dropdowns.items()}
 
-    def filter_data(self, filters: dict) -> None:
-        # TODO: add doc string especially re: time_period ... convert this to checking if a filter is a tuple of two dates/dt's
-        #   replace hard-coded event_end_date
+    def filter_data(self, filters: dict, sort_key: str = None, time_period_col: str = None) -> None:
+        """Accepts a dictionary whose keys are 'columns' and whose list of values are the 'column' data.
+        Data that meets the provided filters is stored in self.filtered_data, ordered by date descending.
+        'Special keys': If the filter's value is 'All', that filter is ignored.
+        If the key is 'time_period', it expects a tuple of two dates, saving dates that are between (inclusive).
+        This is done on the parameter 'time_period_col'. """
         if not filters:
             self.filtered_data = self.data
         filtered = self.data.copy()
         for key, value in filters.items():
             if value and value != 'All':
                 if key == 'time_period':
-                    filtered = [entry for entry in filtered if value[0] <= entry['event_end_date'] <= value[1]]
+                    filtered = [entry for entry in filtered if value[0] <= entry[time_period_col] <= value[1]]
                 else:
                     filtered = [entry for entry in filtered if entry[key] in value]
-        self.filtered_data = sorted(filtered, key=lambda x: x['event_end_date'], reverse=True)
+        self.filtered_data = sorted(filtered, key=lambda x: x[sort_key], reverse=True) if sort_key else filtered
 
     def group_data_by_player_year(self) -> None:
         """Returns list of dicts, such as:
@@ -101,11 +104,11 @@ class StreamlitData:
         # Convert the grouped data back to a list
         self.grouped_data = list(grouped.values())
 
-    # TODO: can this be genericized to just group_data(grouper) ?
-    def group_data_by_player(self) -> list[dict]:
-        winners = [r['player_w_flag'] for r in self.filtered_data]
-        winner_counter = Counter(winners)
-        return [{'winner_w_flag': winner, 'wins': count} for winner, count in winner_counter.items()]
+    def group_and_count(self, grouper_key: str, desired_count_key: str) -> list[dict]:
+        """Accepts a column on which to group; returns a list of dicts whose count has a key of the desired count key"""
+        values_to_group = [r[grouper_key] for r in self.filtered_data]
+        counter = Counter(values_to_group)
+        return [{grouper_key: group, desired_count_key: count} for group, count in counter.items()]
 
     @staticmethod
     def rank_data(unranked_data: list[dict], value_key: str) -> list[dict] | None:
@@ -154,31 +157,31 @@ with st.sidebar:
     st.session_state['filters']['time_period']: tuple[date, date] = TIME_PERIODS[selected_time_period]
 
 
-data.filter_data(st.session_state['filters'])
+data.filter_data(st.session_state['filters'], sort_key='event_end_date', time_period_col='event_end_date')
 data.group_data_by_player_year()
-df = pd.DataFrame(data.grouped_data)
+players_and_wins: list[dict] = data.group_and_count('player_w_flag', 'wins')
+ranked_players = data.rank_data(players_and_wins, 'wins')
+top_7_names = [d['player_w_flag'] for d in ranked_players if d['rank'] <= 7]
+df_ranked = pd.DataFrame([r for r in data.grouped_data if r['player_w_flag'] in top_7_names])
 
 
 # DISPLAY THE DATA
 # Player Wins Line Chart
-# TODO: sensitize to a max rank cap
 with st.container():
     st.header('Top Players (DGPT Era)')
-    st.caption('Max five players (plus ties).  Group by player to see the chart.')
+    st.caption('Max seven players (plus ties).  Group by player to see the chart.')
     each_or_cumulative = st.radio('', ['Wins By Year', 'Cumulative Career Wins (line)',
                                        'Cumulative Career Wins (animated bar)'], horizontal=True)
     if each_or_cumulative in ('Wins By Year', 'Cumulative Career Wins (line)'):
         # Altair Line Chart
         y_key = 'season_wins' if each_or_cumulative == 'Wins By Year' else 'cumulative_wins'
-        chart = alt.Chart(df).mark_line().encode(x='event_year:O', y=f'{y_key}:Q', color='player_w_flag:N')
+        chart = alt.Chart(df_ranked).mark_line().encode(x='event_year:O', y=f'{y_key}:Q', color='player_w_flag:N')
         st.altair_chart(chart, use_container_width=True)
     else:
         # Plotly Animation
         placeholder = st.empty()
         with placeholder:
             st.header('Animation on Cumulative Wins')
-            df['rank'] = df.groupby('event_year')['cumulative_wins'].rank(ascending=False, method='first')
-            df = df[df['rank'] <= 7]
 
             for year in data.years:
                 fig, ax = plt.subplots(figsize=(8, 3))
@@ -192,14 +195,14 @@ with st.container():
                 ax.yaxis.label.set_color('white')
                 ax.title.set_color('white')
 
-                year_data = df[df['event_year'] == year].sort_values('cumulative_wins', ascending=False)
+                year_data = df_ranked[df_ranked['event_year'] == year].sort_values('cumulative_wins', ascending=False)
                 x, y = year_data['player_w_flag'], year_data['cumulative_wins']
                 ax.barh(x, y, color='#FF4B4B')  # Streamlit's primary color
                 for index, value in enumerate(y):
                     plt.text(value - 1, index, str(value), color='white', va='center', ha='right')
 
                 ax.set_title(f'Most Career Wins in the DGPT Era: {year}', fontsize=16)
-                ax.set_xlim(0, df['cumulative_wins'].max() + 5)
+                ax.set_xlim(0, df_ranked['cumulative_wins'].max() + 5)
                 ax.invert_yaxis()  # Highest rank at the top
 
                 # Update the placeholder with the new plot
@@ -214,18 +217,17 @@ with st.container():
 # Leaderboard Table
 with st.container():
     st.header('Leaderboard (DGPT Era)')
-    column_order = ['rank', 'winner_w_flag', 'wins']
-    lb_col_config = {'rank': 'Rank', 'winner_w_flag': 'Winner', 'wins': 'Wins'}
-    table_data = data.rank_data(data.group_data_by_player(), 'wins')
+    lb_col_config = {'rank': 'Rank', 'player_w_flag': 'Winner', 'wins': 'Wins'}
+    column_order = list(lb_col_config.keys())
+    table_data = data.rank_data(data.group_and_count('player_w_flag', 'wins'), 'wins')
     st.dataframe(table_data, column_order=column_order, column_config=lb_col_config, hide_index=True)
 
-# Table
+# All Results Table
 with st.expander('Event Results'):
-    column_order = ['event_year', 'player_w_flag', 'tourney_name', 'event_designation_map',
-                    'player_division', 'event_state', 'event_country_name']
     column_config = {'event_year': st.column_config.NumberColumn('Year', format='%d'),
                      'player_w_flag': 'Winner', 'tourney_name': 'Tournament', 'event_designation_map': 'Designation',
                      'player_division': 'Division', 'event_state': 'State', 'event_country_name': 'Country'}
+    column_order = list(column_config.keys())
     height = (len(data.filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
-    st.dataframe(data.filtered_data, height=height, column_order=column_order, column_config=column_config, hide_index=True,
-                 use_container_width=True)
+    st.dataframe(data.filtered_data, height=height, column_order=column_order, column_config=column_config,
+                 hide_index=True, use_container_width=True)
