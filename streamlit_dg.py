@@ -1,7 +1,10 @@
 import altair as alt
-from collections import Counter
+from collections import Counter, defaultdict
+from datetime import date
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
+import time
 from utilnacki.dates import TIME_PERIODS
 
 from controller.event import EventResults
@@ -11,6 +14,109 @@ from controller.event import EventResults
 TABLE_ROW_HEIGHT = 36
 
 st.set_page_config(page_title='Bernacki DiscGolf', page_icon=':flying_disc:', layout='wide')
+st.session_state['filters'] = {}
+st.session_state['groupers'] = {}
+
+
+class StreamlitData:
+    def __init__(self, records: list[dict], filters: list[str], groupers: dict[str: tuple[str, ...]]):
+        self._dirty_data = records
+        self.data: list[dict] = self.clean_data()
+        self.filters = filters
+        self.groupers = groupers
+        self.filter_dropdowns: dict = self.populate_filter_dropdowns()
+        self.filtered_data: list[dict] = self.data.copy()
+        self.grouped_data: list[dict] | None = None
+
+    @property
+    def players(self) -> list:
+        return sorted({p['player_w_flag'] for p in self.filtered_data})
+
+    @property
+    def years(self) -> list:
+        return sorted({r['event_year'] for r in self.filtered_data if r.get('event_year')})
+
+    def clean_data(self) -> list[dict]:
+        designation_map = {'DGPT +': 'Elevated', 'Elite +': 'Elevated',
+                           'Elite': 'Standard', 'DGPT Undesignated': 'Standard', 'Silver': 'Standard'}
+        cleaned_data = []
+        for row in self._dirty_data:
+            # create some columns, including the flag emoji
+            row['player_w_flag'] = f"{row['player_full_name']}  {row['country_flag_emoji']}"
+            row['country_w_flag'] = f"{row['country_name']}  {row['country_flag_emoji']}"
+            row['event_state'] = '' if not row['event_state'] else row['event_state']
+            # group the designations
+            row['event_designation_map'] = designation_map.setdefault(row['event_designation'],
+                                                                      row['event_designation'])
+            cleaned_data.append(row)
+        return cleaned_data
+
+    def populate_filter_dropdowns(self) -> dict[str: list]:
+        filter_dropdowns = {f: set() for f in self.filters}
+        for r in self.data:
+            for k, v in r.items():
+                if k in self.filters:
+                    filter_dropdowns[k].add(v)
+        return {k: sorted(v, key=lambda x: (x is None, x)) for k, v in filter_dropdowns.items()}
+
+    def filter_data(self, filters: dict) -> None:
+        # TODO: add doc string especially re: time_period ... convert this to checking if a filter is a tuple of two dates/dt's
+        #   replace hard-coded event_end_date
+        if not filters:
+            self.filtered_data = self.data
+        filtered = self.data.copy()
+        for key, value in filters.items():
+            if value and value != 'All':
+                if key == 'time_period':
+                    filtered = [entry for entry in filtered if value[0] <= entry['event_end_date'] <= value[1]]
+                else:
+                    filtered = [entry for entry in filtered if entry[key] in value]
+        self.filtered_data = sorted(filtered, key=lambda x: x['event_end_date'], reverse=True)
+
+    def group_data_by_player_year(self) -> None:
+        """Returns list of dicts, such as:
+        {'player_w_flag': 'Kristin Tattar  :flag-ee', 'event_year': 2021, 'season_wins: 3, 'cumulative_wins': 4}"""
+        grouped = defaultdict(lambda: {'player_w_flag': None, 'event_year': None, 'season_wins': 0, 'cumulative_wins': 0})
+        cumulative_totals = defaultdict(int)  # Cumulative wins by player
+
+        # For each player and year combination, process and update wins
+        for year in self.years:
+            for player in self.players:
+                key = (player, year)
+
+                # Filter out records for this player-year if present
+                player_records = [r for r in self.filtered_data if r['player_w_flag'] == player and r['event_year'] == year]
+
+                # If there are records for this player-year, count the wins
+                wins = len(player_records)
+                if wins > 0:
+                    cumulative_totals[player] += wins  # Update cumulative wins
+
+                # Update grouped data for the player-year with wins and cumulative wins
+                grouped[key]['player_w_flag'] = player
+                grouped[key]['event_year'] = year
+                grouped[key]['season_wins'] = wins
+                grouped[key]['cumulative_wins'] = cumulative_totals[player]
+
+        # Convert the grouped data back to a list
+        self.grouped_data = list(grouped.values())
+
+    # TODO: can this be genericized to just group_data(grouper) ?
+    def group_data_by_player(self) -> list[dict]:
+        winners = [r['player_w_flag'] for r in self.filtered_data]
+        winner_counter = Counter(winners)
+        return [{'winner_w_flag': winner, 'wins': count} for winner, count in winner_counter.items()]
+
+    @staticmethod
+    def rank_data(unranked_data: list[dict], value_key: str) -> list[dict] | None:
+        """Appends a key called 'rank' with a value of the rank; it handles ties"""
+        if not unranked_data:
+            return None
+        sorted_data = sorted(unranked_data, key=lambda x: x[value_key], reverse=True)
+        sorted_data[0]['rank'] = 1
+        for i, row in enumerate(sorted_data[1:], start=2):
+            row['rank'] = i if row[value_key] != sorted_data[i-2][value_key] else sorted_data[i-2]['rank']
+        return sorted_data
 
 @st.cache_data
 def get_data() -> list[dict]:
@@ -18,156 +124,100 @@ def get_data() -> list[dict]:
     return results.results_flat
 
 
-def clean_data(dirty_data: list[dict]) -> list[dict]:
-    designation_map = {'DGPT +': 'Elevated', 'Elite +': 'Elevated',
-                       'Elite': 'Standard', 'DGPT Undesignated': 'Standard', 'Silver': 'Standard'}
-    cleaned_data = []
-    for row in dirty_data:
-        # create some columns, including the flag emoji
-        row['player_w_flag'] = f"{row['player_full_name']}  {row['country_flag_emoji']}"
-        row['country_w_flag'] = f"{row['country_name']}  {row['country_flag_emoji']}"
-        # group the designations
-        row['event_designation_map'] = designation_map.setdefault(row['event_designation'], row['event_designation'])
-        cleaned_data.append(row)
-    return cleaned_data
-
-
-tmp_data = get_data()
-data = clean_data(tmp_data)
-
-def unique_sorted_values(key: str) -> list[str]:
-    return sorted({row[key] for row in data if row[key]})
-
-def populate_filters() -> dict:
-    filter_elements = ['player_w_flag', 'country_w_flag', 'player_division', 'event_designation_map', 'tourney_name',
-                       'event_state', 'event_country_name']
-    return {e: unique_sorted_values(e) for e in filter_elements}
-
-def populate_groupers() -> dict:
-    # TODO: can I separate key from display label, maybe using list.index() like in the each v cumulative radio?
-    grouper_elements = ['player_w_flag', 'tourney_name', 'event_state', 'event_country_name',
-                        'event_designation_map', 'event_year']
-    return {'event_grouper': grouper_elements}
-
-
-filter_map = populate_filters()
-grouper_map = populate_groupers()
-
-
-def filter_data(incoming_data: list[dict], filters: dict) -> list[dict]:
-    # TODO: Move this to Utilnacki
-    #   add doc string especially re: time_period ... convert this to checking if a filter is a tuple of two dates/dt's
-    #   replace hard-coded event_end_date
-    if not filters:
-        return incoming_data
-    filtered = incoming_data
-    for key, value in filters.items():
-        if value and value != 'All':
-            if key == 'time_period':
-                filtered = [entry for entry in filtered if value[0] <= entry['event_end_date'] <= value[1]]
-            else:
-                filtered = [entry for entry in filtered if entry[key] in value]
-    return sorted(filtered, key=lambda x: x['event_end_date'], reverse=True)
-
-def group_data(data, grouper) -> list[dict]:
-    """ Returns [{'': Alice, ' ': 5}, {'': Bob, ' ': 3}].  It is ordered by the value descending.
-    The keys are blanks because streamlit datatables must have keys, else default column headers are shown. """
-    # TODO: the empty string keys are going to be deprecated by Streamlit and are are stupid
-    # TODO: grouper should be a list of groupers
-    # TODO: can this be genericized and moved to utilnacki
-    # TODO: create a separate rank w ties function & move to utilnacki
-    counter = Counter([row[grouper] for row in data if grouper])
-    return sorted([{'': k, ' ': v} for k, v in counter.items()], key=lambda x: x[' '], reverse=True)
-
-
-# TODO: All of the above is a pipeline.  How can I create a genericized class/ABC, where I can feed it the necessary
-#  flattened data, groupers, filters
-
+data = StreamlitData(get_data()
+                     , filters=['player_w_flag', 'country_w_flag', 'player_division',
+                                'event_designation_map', 'tourney_name', 'event_state', 'event_country_name']
+                     , groupers={'event_grouper': ('player_w_flag', )})  # focused on just grouping by player wins
 
 # FILTER & GROUP THE DATA
 # Sidebar
 with st.sidebar:
     st.sidebar.header('Grouper')
-    selected_grouper = st.sidebar.selectbox('Grouper', options=grouper_map['event_grouper'], index=0)
+    st.session_state['groupers']['event_grouper'] = st.sidebar.selectbox('Grouper', options=data.groupers['event_grouper'], index=0)
 
 with st.sidebar:
     st.sidebar.header('Filters')
-    selected_players = st.sidebar.multiselect('Winner', filter_map['player_w_flag'])
-    selected_player_countries = st.sidebar.multiselect("Winner's Country", filter_map['country_w_flag'])
-    filter_map['player_division'].append('All')
-    selected_divisions = st.sidebar.radio('Division', filter_map['player_division'], horizontal=True, index=2)
-    filter_map['event_designation_map'].append('All')
-    selected_designations = st.sidebar.radio('Designation', filter_map['event_designation_map'], horizontal=True, index=3)
-
-    selected_tournament_names = st.sidebar.multiselect('Tournament', filter_map['tourney_name'])
+    st.session_state['filters']['player_w_flag'] = st.sidebar.multiselect('Winner', data.filter_dropdowns['player_w_flag'])
+    st.session_state['filters']['country_w_flag'] = st.sidebar.multiselect("Winner's Country", data.filter_dropdowns['country_w_flag'])
+    data.filter_dropdowns['player_division'].append('All')
+    st.session_state['filters']['player_division'] = st.sidebar.radio('Division', data.filter_dropdowns['player_division'], horizontal=True, index=2)
+    data.filter_dropdowns['event_designation_map'].append('All')
+    st.session_state['filters']['event_designation_map'] = st.sidebar.radio('Designation', data.filter_dropdowns['event_designation_map'], horizontal=True, index=3)
+    st.session_state['filters']['tourney_name'] = st.sidebar.multiselect('Tournament', data.filter_dropdowns['tourney_name'])
 
     # Place state & country side-by-side sidebar into two columns
     col1, col2 = st.sidebar.columns(2)
-    selected_tournament_states = col1.multiselect('State', filter_map['event_state'])
-    selected_tournament_countries = col2.multiselect('Country', filter_map['event_country_name'])
+    st.session_state['filters']['event_state'] = col1.multiselect('State', data.filter_dropdowns['event_state'])
+    st.session_state['filters']['event_country_name'] = col2.multiselect('Country', data.filter_dropdowns['event_country_name'])
 
     selected_time_period = st.sidebar.selectbox('Time Period', list(TIME_PERIODS.keys()), index=5)
-    start_date, end_date = TIME_PERIODS[selected_time_period]
-
-# Apply filters to data
-filters = {
-    "player_w_flag": selected_players, "country_w_flag": selected_player_countries,
-    "tourney_name": selected_tournament_names, "player_division": selected_divisions,
-    "event_designation_map": selected_designations, "event_state": selected_tournament_states,
-    "event_country_name": selected_tournament_countries, "time_period": (start_date, end_date)}
-
-filtered_data: list[dict] = filter_data(data, filters)
-grouped_data: list[dict] = group_data(filtered_data, selected_grouper)
-
-def top_x_items_w_ties(players_and_wins: list[dict], max_rank_w_ties: int) -> list[str]:
-    # TODO: utilnacki?
-    if len(players_and_wins) <= max_rank_w_ties:
-        return [p[''] for p in players_and_wins]
-    return [p[''] for p in players_and_wins if p[' '] >= players_and_wins[max_rank_w_ties-1][' ']]
-
-def wins_by_player_and_year(data: list[dict], subject_players: list[str]) -> tuple[list[dict], list[dict]]:
-    """Group the data by player & year, summing the wins.  Two datasets returned: by year & cumulative career wins."""
-    by_year = {}
-    for row in data:
-        if row['player_w_flag'] in subject_players:
-            key = (row['player_w_flag'], row['event_year'])
-            by_year.setdefault(key, 0)
-            by_year[key] += 1
-    by_year = [{'player': player, 'year': year, 'wins': wins} for (player, year), wins in by_year.items()]
-
-    cumulative = {}
-    for row in by_year:
-        key = (row['player'], row['year'])
-        cumulative.setdefault(key, 0)
-        cumulative[key] = sum([r['wins'] for r in by_year if key[0] == r['player'] and key[1] >= r['year']])
-    cumulative = [{'player': player, 'year': year, 'wins': wins} for (player, year), wins in cumulative.items()]
-
-    return by_year, cumulative
+    st.session_state['filters']['time_period']: tuple[date, date] = TIME_PERIODS[selected_time_period]
 
 
-top_players = top_x_items_w_ties(grouped_data, 5)  # forcing max players to reduce clutter on chart
-player_year_wins = wins_by_player_and_year(filtered_data, top_players)
+data.filter_data(st.session_state['filters'])
+data.group_data_by_player_year()
+df = pd.DataFrame(data.grouped_data)
+
 
 # DISPLAY THE DATA
 # Player Wins Line Chart
-# TODO: This should be sensitive to all parameter except time period, as it's too confusing ... how can i do this?
+# TODO: sensitize to a max rank cap
 with st.container():
     st.header('Top Players (DGPT Era)')
     st.caption('Max five players (plus ties).  Group by player to see the chart.')
-    career_wins_options = ['Wins By Year', 'Cumulative Career Wins']
-    each_or_cumulative = st.radio('', career_wins_options, horizontal=True)
-    df = pd.DataFrame(player_year_wins[career_wins_options.index(each_or_cumulative)])
-    chart = alt.Chart(df).mark_line().encode(x='year:O', y='wins:Q', color='player:N')
-    st.altair_chart(chart, use_container_width=True)
+    each_or_cumulative = st.radio('', ['Wins By Year', 'Cumulative Career Wins (line)',
+                                       'Cumulative Career Wins (animated bar)'], horizontal=True)
+    if each_or_cumulative in ('Wins By Year', 'Cumulative Career Wins (line)'):
+        # Altair Line Chart
+        y_key = 'season_wins' if each_or_cumulative == 'Wins By Year' else 'cumulative_wins'
+        chart = alt.Chart(df).mark_line().encode(x='event_year:O', y=f'{y_key}:Q', color='player_w_flag:N')
+        st.altair_chart(chart, use_container_width=True)
+    else:
+        # Plotly Animation
+        placeholder = st.empty()
+        with placeholder:
+            st.header('Animation on Cumulative Wins')
+            df['rank'] = df.groupby('event_year')['cumulative_wins'].rank(ascending=False, method='first')
+            df = df[df['rank'] <= 7]
 
-# TODO: This should show a rank column, and the existing left-most column is fubed
+            for year in data.years:
+                fig, ax = plt.subplots(figsize=(8, 3))
+                ax.clear()
+
+                # Streamlit's default dark theme
+                fig.patch.set_facecolor('#0E1117')
+                ax.set_facecolor('#0E1117')
+                ax.tick_params(colors='white')
+                ax.xaxis.label.set_color('white')
+                ax.yaxis.label.set_color('white')
+                ax.title.set_color('white')
+
+                year_data = df[df['event_year'] == year].sort_values('cumulative_wins', ascending=False)
+                x, y = year_data['player_w_flag'], year_data['cumulative_wins']
+                ax.barh(x, y, color='#FF4B4B')  # Streamlit's primary color
+                for index, value in enumerate(y):
+                    plt.text(value - 1, index, str(value), color='white', va='center', ha='right')
+
+                ax.set_title(f'Most Career Wins in the DGPT Era: {year}', fontsize=16)
+                ax.set_xlim(0, df['cumulative_wins'].max() + 5)
+                ax.invert_yaxis()  # Highest rank at the top
+
+                # Update the placeholder with the new plot
+                with placeholder.container():
+                    plt.tight_layout()
+                    st.pyplot(fig)
+
+                plt.close(fig)
+                time.sleep(0.05)
+
+
 # Leaderboard Table
 with st.container():
     st.header('Leaderboard (DGPT Era)')
-    lb_col_config = {'player_w_flag': {'': st.column_config.Column('Winner', width='large')},
-                     'event_year': {'': st.column_config.NumberColumn('Year', format='%d')},
-                     '_': {'': st.column_config.Column(selected_grouper.replace('_', ' ').title())}}
-    st.dataframe(grouped_data, column_config=lb_col_config.get(selected_grouper) or lb_col_config['_'], hide_index=True)
+    column_order = ['rank', 'winner_w_flag', 'wins']
+    lb_col_config = {'rank': 'Rank', 'winner_w_flag': 'Winner', 'wins': 'Wins'}
+    table_data = data.rank_data(data.group_data_by_player(), 'wins')
+    st.dataframe(table_data, column_order=column_order, column_config=lb_col_config, hide_index=True)
 
 # Table
 with st.expander('Event Results'):
@@ -176,6 +226,6 @@ with st.expander('Event Results'):
     column_config = {'event_year': st.column_config.NumberColumn('Year', format='%d'),
                      'player_w_flag': 'Winner', 'tourney_name': 'Tournament', 'event_designation_map': 'Designation',
                      'player_division': 'Division', 'event_state': 'State', 'event_country_name': 'Country'}
-    height = (len(filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
-    st.dataframe(filtered_data, height=height, column_order=column_order, column_config=column_config, hide_index=True,
+    height = (len(data.filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
+    st.dataframe(data.filtered_data, height=height, column_order=column_order, column_config=column_config, hide_index=True,
                  use_container_width=True)
