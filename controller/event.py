@@ -117,6 +117,11 @@ class EventResults:
         return sorted([e for e in self.results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
 
 
+def get_event(dg_event_id: int) -> dict:
+    with get_db_session() as s:
+        event = s.get(Event, dg_event_id)
+        return event.k_v
+
 def get_all_events() -> list[dict]:
     with get_db_session() as s:
         events = s.query(Event).all()

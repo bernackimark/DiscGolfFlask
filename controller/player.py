@@ -18,10 +18,10 @@ def get_all_players_as_classes() -> list[Player]:
     with get_db_session() as s:
         return [_ for _ in s.query(Player).all()]
 
-def get_player(pdga_id: int) -> Player:
+def get_player(pdga_id: int) -> dict | None:
     with get_db_session() as s:
         player = s.query(Player).filter_by(pdga_id=pdga_id).one_or_none()
-        return player or abort(404, f'Player with PDGA# {pdga_id} not found')
+        return player.k_v or abort(404, f'Player with PDGA# {pdga_id} not found')
 
 def get_last_added_player() -> dict:
     with get_db_session() as s:
