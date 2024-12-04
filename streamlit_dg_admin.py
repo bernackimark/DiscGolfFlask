@@ -39,6 +39,7 @@ with col_add_event:
         'city': form_add_event.text_input('City'),
         'state': form_add_event.text_input('State', max_chars=2),
         'country_code': form_add_event.selectbox('Country', countries_w_flag(), index=232),  # US
+        'pdga_event_id': form_add_event.number_input('PDGA Event ID', min_value=1, max_value=9999999),
         'winner_name': form_add_event.selectbox('Winner', all_players, index=None)
     }
     form_add_event_submit = form_add_event.form_submit_button('Add Event')

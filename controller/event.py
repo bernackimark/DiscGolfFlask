@@ -21,6 +21,7 @@ class NewEvent:
     city: str
     state: str
     country_code: str
+    pdga_event_id: int
     winner_id: int = field(init=False)
     division: str = field(init=False)
     tourney_id: int = field(init=False)
@@ -60,7 +61,8 @@ class NewEvent:
     def db_dict(self) -> dict:
         return {'governing_body': self.governing_body, 'designation': self.designation, 'start_date': self.start_date,
                 'end_date': self.end_date, 'winner_id': self.winner_id, 'tourney_id': self.tourney_id,
-                'city': self.city, 'state': self.state, 'country_code': self.country_code}
+                'city': self.city, 'state': self.state, 'country_code': self.country_code,
+                'pdga_event_id': self.pdga_event_id}
 
     def create_event(self) -> None:
         with get_db_session() as s:
