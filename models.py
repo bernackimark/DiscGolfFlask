@@ -2,6 +2,7 @@ from datetime import date
 
 from db import engine
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -72,6 +73,8 @@ class Event(Base):
     city: str = Column(String, nullable=True)
     state: str = Column(String, nullable=True)
     country_code: str = Column(String, ForeignKey('country.code'))
+    pdga_event_id: str = Column(Integer)
+    results: list[dict] = Column(JSONB)
     created_ts = Column(DateTime, default=func.now())
     lmt = Column(DateTime, default=func.now(), onupdate=func.now())
     tourney = relationship("Tournament")
