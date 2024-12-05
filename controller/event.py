@@ -1,12 +1,15 @@
 from dataclasses import dataclass, field
 from datetime import date
+import json
 
+from config import CONN_STR_UNPACKED
 from db import get_db_session
 from models import Country, Event, Player, Tournament
+from .event_pdga import PDGAEvent
 from .player import get_all_players
+import psycopg2
 from sqlalchemy import desc
-from sqlalchemy.engine.row import Row
-from streamlit import balloons, error, success
+from streamlit import error, success
 from .tournament import get_all_tourneys
 
 
@@ -69,8 +72,10 @@ class NewEvent:
             s.add(Event(**self.db_dict))
             s.commit()
             success("Successfully added your event to the database")
-            balloons()
 
+            pdga_event = PDGAEvent(self.pdga_event_id)
+            update_dg_event(pdga_event, self.division)
+            success("Successfully appended data scraped from the PDGA website")
 
 @dataclass
 class EventResults:
@@ -117,11 +122,6 @@ class EventResults:
         return sorted([e for e in self.results_flat], key=lambda x: x['event_end_date'], reverse=True)[0]
 
 
-def get_event(dg_event_id: int) -> dict:
-    with get_db_session() as s:
-        event = s.get(Event, dg_event_id)
-        return event.k_v
-
 def get_all_events() -> list[dict]:
     with get_db_session() as s:
         events = s.query(Event).all()
@@ -134,3 +134,18 @@ def get_last_added_event() -> tuple[str, date]:
         tourney_name = e.tourney.name
         tourney_end_date = e.end_date
         return tourney_name, tourney_end_date
+
+def update_dg_event(pdga_event_obj: PDGAEvent, division: str):
+    if not pdga_event_obj.is_complete:
+        raise ValueError("The event hasn't been completed on the PDGA website.")
+
+    div_results = pdga_event_obj.data['division_results'][division]
+
+    try:
+        with psycopg2.connect(CONN_STR_UNPACKED) as conn:
+            with conn.cursor() as cur:
+                query = "update dg_event set results = %s from dg_player p where dg_event.pdga_event_id = %s and p.division = %s"
+                cur.execute(query, (json.dumps(div_results), pdga_event_obj.pdga_event_id, division))
+                conn.commit()
+    except Exception as err:
+        print(f"An error occurred: {err}")
