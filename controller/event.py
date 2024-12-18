@@ -3,7 +3,7 @@ from datetime import date
 import json
 
 from config import CONN_STR_UNPACKED
-from db import get_db_session
+from db import get_db_session, get_cursor_w_commit
 from models import Country, Event, Player, Tournament
 from .event_pdga import PDGAEvent
 from .player import get_all_players
@@ -141,11 +141,7 @@ def update_dg_event(pdga_event_obj: PDGAEvent, division: str):
 
     div_results = pdga_event_obj.data['division_results'][division]
 
-    try:
-        with psycopg2.connect(CONN_STR_UNPACKED) as conn:
-            with conn.cursor() as cur:
-                query = "update dg_event set results = %s from dg_player p where dg_event.pdga_event_id = %s and p.division = %s"
-                cur.execute(query, (json.dumps(div_results), pdga_event_obj.pdga_event_id, division))
-                conn.commit()
-    except Exception as err:
-        print(f"An error occurred: {err}")
+    with get_cursor_w_commit() as c:
+        query = "update dg_event set results = %s from dg_player p where dg_event.pdga_event_id = %s and p.division = %s"
+        c.execute(query, (json.dumps(div_results), pdga_event_obj.pdga_event_id, division))
+
