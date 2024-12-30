@@ -2,12 +2,10 @@ from dataclasses import dataclass, field
 from datetime import date
 import json
 
-from config import CONN_STR_UNPACKED
 from db import get_db_session, get_cursor_w_commit
 from models import Country, Event, Player, Tournament
 from .event_pdga import PDGAEvent
 from .player import get_all_players
-import psycopg2
 from sqlalchemy import desc
 from streamlit import error, success
 from .tournament import get_all_tourneys
