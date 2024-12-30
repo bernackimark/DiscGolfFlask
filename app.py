@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, redirect, render_template, url_for
 from pathlib import Path
 
 from controller.event import EventResults
@@ -9,9 +9,10 @@ basedir = Path(__file__).parent.resolve()
 
 @app.route('/')
 def home():
-    return '<h1>Whats up slappers?</h1>'
+    return redirect(url_for('disc_golf'))
+    # return '<h1>Whats up slappers?</h1>'
 
-@app.route('/disc_golf')
+@app.route('/?utm_medium=oembed')
 def disc_golf():
     return render_template("disc_golf.html")
 
