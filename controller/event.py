@@ -143,6 +143,7 @@ def update_dg_event(pdga_event_obj: PDGAEvent, division: str):
     div_results = pdga_event_obj.data['division_results'][division]
 
     with get_cursor_w_commit() as c:
-        query = "update dg_event set results = %s from dg_player p where dg_event.pdga_event_id = %s and p.division = %s"
+        query = ("update dg_event set results = %s from dg_player p "
+                 "where dg_event.pdga_event_id = %s and p.division = %s and dg_event.winner_id = p.pdga_id;")
         c.execute(query, (json.dumps(div_results), pdga_event_obj.pdga_event_id, division))
 
