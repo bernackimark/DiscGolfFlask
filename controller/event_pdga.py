@@ -23,6 +23,12 @@ class PDGAEvent:
         return json.dumps(self.data)
 
     @property
+    def begin_date(self) -> date:
+        _, begin_day_month_str, *_, end_date_str = self.data['dates'].split()
+        begin_date_str = begin_day_month_str + '-' + end_date_str[-4:]
+        return datetime.strptime(begin_date_str, "%d-%b-%Y").date()
+
+    @property
     def end_date(self) -> date:
         *_, end_date_str = self.data['dates'].split()
         return datetime.strptime(end_date_str, "%d-%b-%Y").date()
@@ -34,6 +40,9 @@ class PDGAEvent:
     @property
     def is_complete(self) -> bool:
         return self.status == PDGAEvent.PDGA_COMPLETED_EVENT_STATUS
+
+    def get_winner_by_division(self, division: str) -> int:
+        return self.data['division_results'][division.upper()][0]['PDGA#']
 
     def _scrape_event_page(self) -> dict:
         response = requests.get(f'{EVENT_BASE_URL}{self.pdga_event_id}')
