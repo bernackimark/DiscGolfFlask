@@ -68,6 +68,7 @@ class PDGAEvent:
                       'player_cnt': event_status_data_row.find(class_="players").text,
                       'purse': event_status_data_row.find(class_="purse").text,
                       'dates': soup.find(class_="tournament-date").text,
+                      'location': soup.find(class_='tournament-location').text,
                       'name': soup.find("h1").text,
                       'division_results': {}}
 
