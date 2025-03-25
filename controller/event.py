@@ -72,8 +72,11 @@ class NewEvent:
             success("Successfully added your event to the database")
 
             pdga_event = PDGAEvent(self.pdga_event_id)
-            update_dg_event(pdga_event, self.division)
-            success("Successfully appended data scraped from the PDGA website")
+            try:
+                update_dg_event(pdga_event, self.division)
+                success("Successfully appended data scraped from the PDGA website")
+            except ValueError as e:
+                error(e)
 
 @dataclass
 class EventResults:
