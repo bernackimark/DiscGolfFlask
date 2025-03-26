@@ -74,7 +74,7 @@ class Event(Base):
     state: str = Column(String, nullable=True)
     country_code: str = Column(String, ForeignKey('country.code'))
     pdga_event_id: str = Column(Integer)
-    results: list[dict] = Column(JSONB)
+    results: list[dict] = Column(JSONB, nullable=True)
     created_ts = Column(DateTime, default=func.now())
     lmt = Column(DateTime, default=func.now(), onupdate=func.now())
     tourney = relationship("Tournament")
