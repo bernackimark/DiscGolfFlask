@@ -24,6 +24,7 @@ def country_from_country_w_flag(country_w_flag: str):
     return country_w_flag.split(' ')[0]
 
 # # This is a way to manually add a completed event; disabling this for now in favor of a more automated process
+# # May want to retain this in case I want to load an unsanctioned event
 # with col_add_event:
 #     st.header('Add Event')
 #     tourney_name, end_date = get_last_added_event()
