@@ -3,6 +3,8 @@ import json
 import requests
 
 from bs4 import BeautifulSoup
+from controller.country import get_countries
+from states import states
 from utilnacki.soup import list_of_dicts_from_soup_table
 
 
@@ -36,6 +38,30 @@ class PDGAEvent:
     @property
     def status(self) -> str:
         return self.data['status']
+
+    @property
+    def location(self) -> tuple[str, str, str]:
+        """Returns city, state code | None, country code"""
+        location = self.data['location']
+        string = location[location.index(': ') + 2:]
+        city, state_full, country_full = string.split(', ')
+        country_code = next((code for code, data in get_countries().items() if data['name'] == country_full), None)
+        state_code = next((code for code, name in states.items() if name == state_full), None)
+        if not country_code:
+            raise ValueError(f"Country not found from country name: {country_full}")
+        return city, state_code, country_code
+
+    @property
+    def city(self) -> str:
+        return self.location[0]
+
+    @property
+    def state_code(self) -> str | None:
+        return self.location[1]
+
+    @property
+    def country_code(self) -> str:
+        return self.location[2]
 
     @property
     def is_complete(self) -> bool:
