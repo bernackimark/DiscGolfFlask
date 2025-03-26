@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from db import engine
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, func
@@ -92,6 +92,29 @@ class Event(Base):
         instance_dict['year'] = self.year
         instance_dict['tourney_name'] = self.tourney.name
         instance_dict['country_name'] = self.country.name
+        return instance_dict
+
+
+class Season(Base):
+    __tablename__ = 'dg_season'
+    tourney_id: int = Column(Integer)
+    pdga_event_id: int = Column(Integer)
+    end_date: date = Column(Date)
+    event_designation: str = Column(String, nullable=True)
+    division_str: str = Column(String, nullable=True)
+    created_ts: datetime = Column(DateTime, default=func.now())
+    lmt: datetime = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    @property
+    def divisions(self) -> list[str]:
+        div_str = self.division_str
+        return ['MPO', 'FPO'] if div_str == 'MF' else ['MPO'] if div_str == 'M' else ['FPO']
+
+    @property
+    def k_v(self) -> dict:
+        # the first entry in a Base instance dict is some sqlalchemy junk, hence  "idx > 0"
+        instance_dict = {k: v for idx, (k, v) in enumerate(self.__dict__.items()) if idx > 0}
+        instance_dict['divisions'] = self.divisions
         return instance_dict
 
 
