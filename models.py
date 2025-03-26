@@ -98,8 +98,8 @@ class Event(Base):
 class Season(Base):
     __tablename__ = 'dg_season'
     tourney_id: int = Column(Integer)
-    pdga_event_id: int = Column(Integer)
-    end_date: date = Column(Date)
+    pdga_event_id: int = Column(Integer, primary_key=True)
+    end_date: date = Column(Date, primary_key=True)
     event_designation: str = Column(String, nullable=True)
     division_str: str = Column(String, nullable=True)
     created_ts: datetime = Column(DateTime, default=func.now())
