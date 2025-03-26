@@ -2,9 +2,9 @@ import requests
 
 STATUS = 'Current'
 CLASS = 'P'  # Pro
-ID_START = '<td class="views-field views-field-PDGANum pdga-number">'
+ID_START = '<td class="views-field views-field-PDGANum pdga-number" >'
 ID_END = '<'
-COUNTRY_START = '<td class="views-field views-field-Country country">'
+COUNTRY_START = '<td class="views-field views-field-Country country" >'
 COUNTRY_END = '<'
 
 def scrape_id_and_country(first_name: str, last_name: str,
