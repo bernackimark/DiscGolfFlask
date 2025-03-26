@@ -1,45 +1,54 @@
 from dataclasses import dataclass, field
 from datetime import date
 import json
+from typing import Self
 
 from db import get_db_session, get_cursor_w_commit
 from models import Country, Event, Player, Tournament
 from .event_pdga import PDGAEvent
 from .player import get_all_players
 from sqlalchemy import desc
-from streamlit import error, success
 from .tournament import get_all_tourneys
 
 
-@dataclass
+@dataclass(kw_only=True)
 class NewEvent:
     governing_body: str
     designation: str
     start_date: date
     end_date: date
-    winner_name: str
-    tourney_name: str
     city: str
     state: str
     country_code: str
     pdga_event_id: int
-    winner_id: int = field(init=False)
+    winner_name: str = None
+    winner_id: int = None
+    tourney_id: int = None
+    tourney_name: str = None
     division: str = field(init=False)
-    tourney_id: int = field(init=False)
 
     def __post_init__(self):
         all_players = get_all_players()
-        if self.winner_name not in {e['full_name'] for e in all_players}:
-            error(f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
-            exit()
-        self.winner_id, self.division = next((player['pdga_id'], player['division']) for player in all_players
-                                             if self.winner_name == player['full_name'])
+        if self.winner_id is not None:
+            winner_id, div = next(((p['pdga_id'], p['division']) for p in all_players
+                                   if self.winner_id == p['pdga_id']), None)
+            self.winner_id = winner_id
+            self.division = div
+        else:
+            if self.winner_name not in {e['full_name'] for e in all_players}:
+                raise ValueError(f"{self.winner_name} doesn't exist yet. Please create the player and re-run.")
+            self.winner_id, self.division = next((player['pdga_id'], player['division']) for player in all_players
+                                                 if self.winner_name == player['full_name'])
 
         all_tourneys = get_all_tourneys()
-        if self.tourney_name not in {e['name'] for e in all_tourneys}:
-            error(f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
-            exit()
-        self.tourney_id = next(tourney['id'] for tourney in all_tourneys if self.tourney_name == tourney['name'])
+        if self.tourney_id is not None:
+            self.tourney_name = next((t['name'] for t in all_tourneys if t['id'] == self.tourney_id), None)
+            if not self.tourney_name:
+                raise ValueError(f"Can't find tourney ID {self.tourney_id} in db")
+        else:
+            if self.tourney_name not in {e['name'] for e in all_tourneys}:
+                raise ValueError(f"{self.tourney_name} doesn't exist yet. Please create the tournament and re-run.")
+            self.tourney_id = next(tourney['id'] for tourney in all_tourneys if self.tourney_name == tourney['name'])
 
         with get_db_session() as s:
             all_events: list[dict] = get_all_events()
@@ -47,16 +56,23 @@ class NewEvent:
                 if self.tourney_name == e['tourney_name'] and self.end_date == e['end_date']:
                     existing_division = next(p['division'] for p in all_players if p['pdga_id'] == e['winner_id'])
                     if self.division == existing_division:
-                        error(f"{self.tourney_name} for the {self.division} division ending on {self.end_date} already exists.")
-                        exit()
+                        raise ValueError(f"{self.tourney_name} for the {self.division} division "
+                                         f"ending on {self.end_date} already exists.")
 
         if self.governing_body not in {e['governing_body'] for e in all_events}:
-            error(f"{self.governing_body} is not a legitimate governing body")
-            exit()
+            raise ValueError(f"{self.governing_body} is not a legitimate governing body")
 
         if self.end_date < self.start_date:
-            error(f"End date cannot be before start date")
-            exit()
+            raise ValueError(f"End date cannot be before start date")
+
+    @classmethod
+    def create_from_db_and_pdga_site(cls, pdga_event_id: int, designation: str, tourney_id: int, div: str) -> Self:
+        pe = PDGAEvent(pdga_event_id)
+        governing_body = 'PDGA' if designation == 'Major' else 'DGPT'
+        return cls(governing_body=governing_body, designation=designation,
+                   start_date=pe.begin_date, end_date=pe.end_date,
+                   city=pe.city, state=pe.state_code, country_code=pe.country_code,
+                   pdga_event_id=pdga_event_id, winner_id=pe.get_winner_by_division(div), tourney_id=tourney_id)
 
     @property
     def db_dict(self) -> dict:
@@ -69,14 +85,12 @@ class NewEvent:
         with get_db_session() as s:
             s.add(Event(**self.db_dict))
             s.commit()
-            success("Successfully added your event to the database")
 
             pdga_event = PDGAEvent(self.pdga_event_id)
             try:
                 update_dg_event(pdga_event, self.division)
-                success("Successfully appended data scraped from the PDGA website")
             except ValueError as e:
-                error(e)
+                raise ValueError(e)
 
 @dataclass
 class EventResults:
