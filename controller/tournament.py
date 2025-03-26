@@ -1,10 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 
 from db import get_db_session
 from flask import abort
 from models import Tournament
-from sqlalchemy import desc
-from streamlit import balloons, success
+from sqlalchemy import func
 
 def get_all_tourneys() -> list[dict]:
     with get_db_session() as s:
@@ -20,22 +19,22 @@ def get_tourney(name: str) -> list[Tournament]:
         tourney = s.query(Tournament).filter_by(name=name).all()
         return tourney or abort(404, f'Tournament named {name} not found')
 
-def create_tourney(tourney):
-    # TODO: re-write to accommodate parent_id/expiry concepts
-
+def create_tourney(new_tourney_name: str, expires_name: str = None, expires_id: int = None):
     with get_db_session() as s:
-        name = tourney.get('name')
-        if s.query(Tournament).filter_by(name=name).one_or_none():
-            abort(406, f'{name} already exists')
+        if s.query(Tournament).filter_by(name=new_tourney_name).one_or_none():
+            raise ValueError(f'{new_tourney_name} already exists')
 
-        max_parent_id_row = s.query(Tournament).order_by(desc(Tournament.parent_id)).first()
-        tourney['parent_id'] = max_parent_id_row.id + 1
-        tourney['effective_date'] = date(date.today().year, 1, 1)
+        max_id = s.query(func.max(Tournament.id)).scalar()
+        jan_1_this_yr = date(date.today().year, 1, 1)
+        dec_31_last_yr = date(date.today().year - 1, 12, 31)
 
-        s.add(Tournament(**tourney))
-        s.commit()
-        success("Successfully added your tournament to the database")
-        balloons()
-
-def update_tourney(tourney):
-    ...
+        try:
+            if not expires_name:
+                s.add(Tournament(parent_id=max_id+1, effective_date=jan_1_this_yr), name=new_tourney_name)
+            else:
+                s.add(Tournament(parent_id=expires_id, effective_date=jan_1_this_yr), name=new_tourney_name)
+                s.query(Tournament).filter_by(id=expires_id
+                                              ).update({'expiry_date': dec_31_last_yr, 'lmt': datetime.now()})
+            s.commit()
+        except Exception as e:
+            raise e
