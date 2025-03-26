@@ -12,16 +12,16 @@ def get_all_countries() -> dict:
     return get_countries()
 
 
-all_countries: dict = get_all_countries()
-all_players: list = sorted({p['full_name'] for p in get_all_players()})
-all_tourneys: list = sorted({t['name'] for t in get_all_tourneys()})
+# all_countries: dict = get_all_countries()
+# all_players: list = sorted({p['full_name'] for p in get_all_players()})
+# all_tourneys: list = sorted({t['name'] for t in get_all_tourneys()})
 
 
-def countries_w_flag() -> list[str]:
-    return [f'{code} {data["flag_emoji"]}' for code, data in all_countries.items()]
-
-def country_from_country_w_flag(country_w_flag: str):
-    return country_w_flag.split(' ')[0]
+# def countries_w_flag() -> list[str]:
+#     return [f'{code} {data["flag_emoji"]}' for code, data in all_countries.items()]
+#
+# def country_from_country_w_flag(country_w_flag: str):
+#     return country_w_flag.split(' ')[0]
 
 # # This is a way to manually add a completed event; disabling this for now in favor of a more automated process
 # # May want to retain this in case I want to load an unsanctioned event
@@ -100,7 +100,7 @@ with col_r.container():
 
     form_add_player = st.form('Add Player')
     co1, co2, co3 = form_add_player.columns([2, 2, 2])
-    player = {'pdga_id': co1.number_input('PDGA #', min_value=1, max_value=1000000, format='%d'),
+    player = {'pdga_id': co1.number_input('PDGA #', min_value=1, max_value=1000000, format='%d', value=pdga_id),
               'first_name': co2.text_input('First Name', value=first if first else None),
               'last_name': co3.text_input('Last Name', value=last if last else None),
               'division': form_add_player.radio('Dvision', ['MPO', 'FPO'], horizontal=True),
@@ -123,14 +123,20 @@ with col_r.container():
 with col_r.container():
     st.header('Add Tournament')
     form_add_tourney = st.form('Add Tournament')
-    tourney = {'name': form_add_tourney.text_input('Name')}
+    tourney_name = form_add_tourney.text_input('Name')
+
+    tourney_names_and_ids = sorted([f"{t['name']} ({t['id']})" for t in get_all_tourneys()])
+    expires_str = form_add_tourney.selectbox('Succeeds', tourney_names_and_ids, index=None)
+    if expires_str:
+        expires_name = expires_str[:expires_str.rfind(" (")]
+        expires_id = int(expires_str[expires_str.rfind("(") + 1:].rstrip(")"))
+
     form_add_tourney_submit = form_add_tourney.form_submit_button('Add Tournament')
 
     if form_add_tourney_submit:
-        for k, v in tourney.items():
-            if not v:
-                st.error(f'Please fill out {k}')
-                exit()
+        if len(tourney_name) < 2:
+            st.error(f'Please enter a name')
+            exit()
 
-        create_tourney(tourney)
+        create_tourney(tourney_name, expires_name, expires_id) if expires_str else create_tourney(tourney_name)
         st.rerun()
