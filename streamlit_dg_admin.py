@@ -1,5 +1,5 @@
 from controller.country import get_countries
-from controller.event import NewEvent, get_last_added_event
+from controller.event import get_completed_unloaded_events, get_last_added_event, write_event_to_db
 from controller.player import NewPlayer, get_last_added_player, get_all_players
 from controller.player_scrape_pdga_id import scrape_id_and_country
 from controller.tournament import create_tourney, get_all_tourneys
@@ -23,40 +23,59 @@ def countries_w_flag() -> list[str]:
 def country_from_country_w_flag(country_w_flag: str):
     return country_w_flag.split(' ')[0]
 
+# # This is a way to manually add a completed event; disabling this for now in favor of a more automated process
+# with col_add_event:
+#     st.header('Add Event')
+#     tourney_name, end_date = get_last_added_event()
+#     st.caption(f"The last event added was {tourney_name} from {end_date}")
+#
+#     form_add_event = st.form('Add Event')
+#     event = {
+#         'designation': form_add_event.radio('Designation', ['Standard', 'Elevated', 'Major'], horizontal=True),
+#         'start_date': form_add_event.date_input('Start Date', value=None),
+#         'end_date': form_add_event.date_input('End Date', value=None),
+#         'tourney_name': form_add_event.selectbox('Tournament', all_tourneys, index=None),
+#         'city': form_add_event.text_input('City'),
+#         'state': form_add_event.text_input('State', max_chars=2),
+#         'country_code': form_add_event.selectbox('Country', countries_w_flag(), index=232),  # US
+#         'pdga_event_id': form_add_event.number_input('PDGA Event ID', min_value=1, max_value=9999999),
+#         'winner_name': form_add_event.selectbox('Winner', all_players, index=None)
+#     }
+#     form_add_event_submit = form_add_event.form_submit_button('Add Event')
+#     if form_add_event_submit:
+#         event['country_code'] = country_from_country_w_flag(event['country_code'])
+#         event['governing_body'] = 'PDGA' if event['designation'] == 'Major' else 'DGPT'
+#
+#         for k, v in event.items():
+#             if not v and not (event['country_code'] != 'US' and k == 'state'):
+#                 st.error(f'Please fill out {k}')
+#                 exit()
+#
+#         event_obj = NewEvent(**event)
+#         if event_obj:
+#             event_obj.create_event()
 
-col_add_event, col_add_player = st.columns(2)
-with col_add_event:
-    st.header('Add Event')
+
+col_l, col_r = st.columns(2)
+with col_l:
+    st.header('Load Completed Events')
+
     tourney_name, end_date = get_last_added_event()
     st.caption(f"The last event added was {tourney_name} from {end_date}")
 
-    form_add_event = st.form('Add Event')
-    event = {
-        'designation': form_add_event.radio('Designation', ['Standard', 'Elevated', 'Major'], horizontal=True),
-        'start_date': form_add_event.date_input('Start Date', value=None),
-        'end_date': form_add_event.date_input('End Date', value=None),
-        'tourney_name': form_add_event.selectbox('Tournament', all_tourneys, index=None),
-        'city': form_add_event.text_input('City'),
-        'state': form_add_event.text_input('State', max_chars=2),
-        'country_code': form_add_event.selectbox('Country', countries_w_flag(), index=232),  # US
-        'pdga_event_id': form_add_event.number_input('PDGA Event ID', min_value=1, max_value=9999999),
-        'winner_name': form_add_event.selectbox('Winner', all_players, index=None)
-    }
-    form_add_event_submit = form_add_event.form_submit_button('Add Event')
-    if form_add_event_submit:
-        event['country_code'] = country_from_country_w_flag(event['country_code'])
-        event['governing_body'] = 'PDGA' if event['designation'] == 'Major' else 'DGPT'
+    if st.button('Load Completed Events'):
+        cues: list[dict] = get_completed_unloaded_events()
+        if not cues:
+            st.info("No completed events to load")
+        else:
+            for cue in cues:
+                try:
+                    write_event_to_db(**cue)
+                    st.success(f"Added {cue['tourney_id']} for {cue['div']}")
+                except ValueError as e:
+                    st.error(e)
 
-        for k, v in event.items():
-            if not v and not (event['country_code'] != 'US' and k == 'state'):
-                st.error(f'Please fill out {k}')
-                exit()
-
-        event_obj = NewEvent(**event)
-        if event_obj:
-            event_obj.create_event()
-
-with col_add_player:
+with col_r.container():
     st.header('Lookup PDGA #')
     form_player_lookup = st.form('Lookup PDGA#')
     co_first, co_last = form_player_lookup.columns(2)
@@ -73,7 +92,7 @@ with col_add_player:
         else:
             co_country.subheader('No player found')
 
-with col_add_player:
+with col_r.container():
     st.header('Add Player')
     last_add = get_last_added_player()
     st.caption(f"The last player added was {last_add['full_name']} on {last_add['created_ts'].date()}")
@@ -100,7 +119,7 @@ with col_add_player:
         st.rerun()
 
 
-with col_add_player:
+with col_r.container():
     st.header('Add Tournament')
     form_add_tourney = st.form('Add Tournament')
     tourney = {'name': form_add_tourney.text_input('Name')}
