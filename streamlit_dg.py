@@ -228,7 +228,7 @@ with col_l.container():
 # Best Avg Finish All-time
 with col_c.container():
     st.header('Lowest Avg Finish')
-    st.caption('Min 10 events; players w no DGPT Era win shown by PDGA#')
+    st.caption('Min 10 events; players w/o a win in the filtered data shown by PDGA#')
     player_finishes = defaultdict(list)
     # {73986: [2, 1, 3, 5, 1], ...}
     for e in data.filtered_data:
