@@ -79,10 +79,11 @@ with col_l:
 with col_l.container():
     st.header('Manual Load Completed Event')
     form_manual_event_load = st.form('Manual Load Completed Event')
-    pdga_event_id = form_manual_event_load.number_input('PDGA Event #', min_value=1, placeholder=None)
-    designation = form_manual_event_load.selectbox('Designation', ['Standard', 'Elevated', 'Major'], index=None)
-    tourney_id = form_manual_event_load.number_input('Tourney ID', min_value=1, placeholder=None)
-    div = form_manual_event_load.selectbox('Division', ['MPO', 'FPO'])
+    left, right = form_manual_event_load.columns(2)
+    pdga_event_id = left.number_input('PDGA Event #', min_value=1, placeholder=None)
+    designation = right.selectbox('Designation', ['Standard', 'Elevated', 'Major'], index=None)
+    tourney_id = left.number_input('Tourney ID', min_value=1, placeholder=None)
+    div = right.selectbox('Division', ['MPO', 'FPO'])
 
     if form_manual_event_load.form_submit_button('Load'):
         if not pdga_event_id > 1 or not designation or not tourney_id > 1 or not div:
