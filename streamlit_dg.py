@@ -214,13 +214,43 @@ with st.container():
                 time.sleep(0.05)
 
 
+col_l, col_c, col_r = st.columns(3)
 # Leaderboard Table
-with st.container():
-    st.header('Leaderboard (DGPT Era)')
+with col_l.container():
+    st.header('Most Wins')
+    st.caption('DGPT Era')
     lb_col_config = {'rank': 'Rank', 'player_w_flag': 'Winner', 'wins': 'Wins'}
     column_order = list(lb_col_config.keys())
     table_data = data.rank_data(data.group_and_count('player_w_flag', 'wins'), 'wins')
     st.dataframe(table_data, column_order=column_order, column_config=lb_col_config, hide_index=True)
+
+
+# Best Avg Finish All-time
+with col_c.container():
+    st.header('Lowest Avg Finish')
+    st.caption('Min 10 events; players w no DGPT Era win shown by PDGA#')
+    player_finishes = defaultdict(list)
+    # {73986: [2, 1, 3, 5, 1], ...}
+    for e in data.filtered_data:
+        if e['event_results']:
+            for player_result in e['event_results']:
+                player_finishes[player_result['PDGA#']].append(player_result['Place'])
+
+    # {73986: 2.4, ...}
+    player_avg_finish = {}
+    for pdga_id, finishes in player_finishes.items():
+        if len(finishes) >= 10:
+            player_avg_finish[pdga_id] = round(sum(finishes) / len(finishes), 1)
+
+    top_x = 10
+    p_avg_finish_top_10: list[tuple[int, float]] = sorted(player_avg_finish.items(), key=lambda item: item[1])[:top_x]
+
+    final_avg_finish = []
+    for pdga_id, avg_finish in p_avg_finish_top_10:
+        player_w_flag = next((e['player_w_flag'] for e in data.filtered_data if e['event_winner_id'] == pdga_id), None)
+        final_avg_finish.append({'player_w_flag': player_w_flag or f'PDGA#: {pdga_id}', 'avg_finish': avg_finish})
+
+    st.dataframe(final_avg_finish, column_config={'player_w_flag': 'Winner', 'avg_finish': 'Avg Place'})
 
 # All Results Table
 with st.expander('Event Results'):
