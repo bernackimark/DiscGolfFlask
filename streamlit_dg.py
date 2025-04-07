@@ -135,8 +135,7 @@ data = StreamlitData(get_data()
 # FILTER & GROUP THE DATA
 # Sidebar
 with st.sidebar:
-    st.sidebar.header('Grouper')
-    st.session_state['groupers']['event_grouper'] = st.sidebar.selectbox('Grouper', options=data.groupers['event_grouper'], index=0)
+    st.session_state['groupers']['event_grouper'] = 'player_w_flag'  # forcing the grouping to be by player
 
 with st.sidebar:
     st.sidebar.header('Filters')
@@ -168,7 +167,7 @@ df_ranked = pd.DataFrame([r for r in data.grouped_data if r['player_w_flag'] in 
 # DISPLAY THE DATA
 # Player Wins Line Chart
 with st.container():
-    st.header('Top Players (DGPT Era)')
+    st.header('Most Wins (DGPT Era)')
     st.caption('Max seven players (plus ties).  Group by player to see the chart.')
     each_or_cumulative = st.radio('', ['Wins By Year', 'Cumulative Career Wins (line)',
                                        'Cumulative Career Wins (animated bar)'], horizontal=True)
@@ -228,7 +227,7 @@ with col_l.container():
 # Best Avg Finish All-time
 with col_c.container():
     st.header('Lowest Avg Finish')
-    st.caption('Min 10 events; players w/o a win in the filtered data shown by PDGA#')
+    st.caption('Min 10 events')
     player_finishes = defaultdict(list)
     # {73986: [2, 1, 3, 5, 1], ...}
     for e in data.filtered_data:
@@ -250,7 +249,38 @@ with col_c.container():
         player_w_flag = next((e['player_w_flag'] for e in data.filtered_data if e['event_winner_id'] == pdga_id), None)
         final_avg_finish.append({'player_w_flag': player_w_flag or f'PDGA#: {pdga_id}', 'avg_finish': avg_finish})
 
-    st.dataframe(final_avg_finish, column_config={'player_w_flag': 'Winner', 'avg_finish': 'Avg Place'})
+    st.dataframe(final_avg_finish, column_config={'player_w_flag': 'Player', 'avg_finish': 'Avg Place'})
+
+
+# Most Top X Finishes
+with col_r.container():
+    header_col_l, header_col_c, header_col_r = st.columns((1, 1, 2), gap='small', vertical_alignment='bottom')
+    header_col_l.header('Top')
+    max_fin = header_col_c.number_input('x', min_value=1, max_value=20, value=10, step=1, label_visibility='hidden')
+    header_col_r.header('Finishes')
+    st.caption('Enter a value between 1 and 20 and hit enter or deselect')
+    player_finishes = defaultdict(int)
+    # {73986: 10, ...}
+    for e in data.filtered_data:
+        if not e['event_results']:
+            continue
+        for player_result in e['event_results']:
+            if player_result['Place'] <= max_fin:
+                player_finishes[player_result['PDGA#']] += 1
+
+    top_x = 10
+    p_top_x_finishes: list[tuple[int, float]] = sorted(player_finishes.items(),
+                                                       key=lambda item: item[1], reverse=True)[:top_x]
+
+    final_top_finishes = []
+    for pdga_id, top_finishes in p_top_x_finishes:
+        player_w_flag = next((e['player_w_flag'] for e in data.filtered_data if e['event_winner_id'] == pdga_id), None)
+        final_top_finishes.append({'player_w_flag': player_w_flag or f'PDGA#: {pdga_id}', 'top_finishes': top_finishes})
+
+    st.dataframe(final_top_finishes, column_config={'player_w_flag': 'Player      ', 'top_finishes': 'Top Finishes'})
+
+
+st.caption('Players w/o a win in the filtered data shown by PDGA#')
 
 # All Results Table
 with st.expander('Event Results'):
@@ -261,3 +291,13 @@ with st.expander('Event Results'):
     height = (len(data.filtered_data) * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT)
     st.dataframe(data.filtered_data, height=height, column_order=column_order, column_config=column_config,
                  hide_index=True, use_container_width=True)
+
+# Info
+with st.expander('Info'):
+    st.markdown("""
+    Data begins with the DGPT in June 2016 in Massachusetts (events won by Brad Williams & Paige Pierce).\n
+    DGPT Silver Series events are included; DGPT Europe events are not. This kinda follows the Jomez Pro schedule.\n
+    Event results are added shortly after the PDGA certifies the results (a couple weeks after the event).\n
+    Use the sidebar to filter the data.\n
+    Questions/comments/requests can be sent to bernackimark@gmail.com.
+    """)
