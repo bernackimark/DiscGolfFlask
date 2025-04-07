@@ -88,7 +88,7 @@ def write_event_to_db(pdga_event_id: int, designation: str, tourney_id: int, div
     winner_div = next(p['division'] for p in get_all_players() if p['pdga_id'] == winner_id)
 
     if pe.status != pe.PDGA_COMPLETED_EVENT_STATUS:
-        raise ValueError("Event results are not finalized on the PDGA site.")
+        raise ValueError(f"Event results for the {pe.end_date} event aren't finalized on the PDGA site.")
 
     if winner_id not in {p['pdga_id'] for p in get_all_players()}:
         raise ValueError(f"Player w PDGA# {winner_id} doesn't exist yet. Please create the player and re-run.")
