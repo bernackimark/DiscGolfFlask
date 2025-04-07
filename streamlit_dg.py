@@ -196,7 +196,7 @@ with st.container():
                 ax.title.set_color('white')
 
                 year_data = df_ranked[df_ranked['event_year'] == year].sort_values('cumulative_wins', ascending=False)
-                x, y = year_data['player_w_flag'], year_data['cumulative_wins']
+                x, y = year_data['player_w_flag'].str[:-4], year_data['cumulative_wins']
                 ax.barh(x, y, color='#FF4B4B')  # Streamlit's primary color
                 for index, value in enumerate(y):
                     plt.text(value - 1, index, str(value), color='white', va='center', ha='right')
@@ -211,7 +211,7 @@ with st.container():
                     st.pyplot(fig)
 
                 plt.close(fig)
-                time.sleep(0.05)
+                time.sleep(0.3)
 
 
 col_l, col_c, col_r = st.columns(3)
