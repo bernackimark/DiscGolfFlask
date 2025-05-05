@@ -85,7 +85,8 @@ def write_event_to_db(pdga_event_id: int, designation: str, tourney_id: int, div
     pe = PDGAEvent(pdga_event_id)
     governing_body = 'PDGA' if designation == 'Major' else 'DGPT'
     winner_id = pe.get_winner_by_division(div)
-    winner_div = next(p['division'] for p in get_all_players() if p['pdga_id'] == winner_id)
+    all_players = get_all_players()
+    winner_div = next(p['division'] for p in all_players if p['pdga_id'] == winner_id)
 
     if pe.status != pe.PDGA_COMPLETED_EVENT_STATUS:
         raise ValueError(f"Event results for the {pe.end_date} event aren't finalized on the PDGA site.")
@@ -97,7 +98,8 @@ def write_event_to_db(pdga_event_id: int, designation: str, tourney_id: int, div
         raise ValueError(f"Can't find tourney ID {tourney_id} in db. Please create the tournament & re-run.")
 
     for e in get_all_events():
-        if e['tourney_id'] == tourney_id and e['end_date'] == pe.end_date and winner_div == div:
+        loaded_event_winner_div = next(p['division'] for p in all_players if p['pdga_id'] == e['winner_id'])
+        if e['tourney_id'] == tourney_id and e['end_date'] == pe.end_date and winner_div == loaded_event_winner_div:
             raise ValueError(f"Tournament ID {tourney_id} for {div} ending on {pe.end_date} already exists.")
 
     if governing_body not in {e['governing_body'] for e in get_all_events()}:
