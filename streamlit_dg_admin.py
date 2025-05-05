@@ -76,6 +76,7 @@ with col_l:
                 except ValueError as e:
                     st.error(e)
 
+
 with col_l.container():
     st.header('Manual Load Completed Event')
     form_manual_event_load = st.form('Manual Load Completed Event')
