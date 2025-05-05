@@ -90,7 +90,10 @@ with col_l.container():
         if not pdga_event_id > 1 or not designation or not tourney_id > 1 or not div:
             st.error('Please enter all values')
             exit()
-        write_event_to_db(pdga_event_id, designation, tourney_id, div)
+        try:
+            write_event_to_db(pdga_event_id, designation, tourney_id, div)
+        except ValueError as e:
+            st.error(e)
 
 with col_r.container():
     st.header('Lookup PDGA #')
