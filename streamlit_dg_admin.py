@@ -72,7 +72,7 @@ with col_l:
             for cue in cues:
                 try:
                     write_event_to_db(**cue)
-                    st.success(f"Added {cue['tourney_id']} for {cue['div']}")
+                    st.success(f"Added PDGA Event # {cue['pdga_event_id']} for {cue['div']}")
                 except ValueError as e:
                     st.error(e)
 
