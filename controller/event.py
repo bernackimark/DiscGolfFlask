@@ -86,7 +86,10 @@ def write_event_to_db(pdga_event_id: int, designation: str, tourney_id: int, div
     governing_body = 'PDGA' if designation == 'Major' else 'DGPT'
     winner_id = pe.get_winner_by_division(div)
     all_players = get_all_players()
-    winner_div = next(p['division'] for p in all_players if p['pdga_id'] == winner_id)
+    winner_div = next((p['division'] for p in all_players if p['pdga_id'] == winner_id), None)
+
+    if not winner_div:
+        raise ValueError(f"No event results found for PDGA Event# {pdga_event_id}")
 
     if pe.status != pe.PDGA_COMPLETED_EVENT_STATUS:
         raise ValueError(f"Event results for the {pe.end_date} event aren't finalized on the PDGA site.")
@@ -110,7 +113,7 @@ def write_event_to_db(pdga_event_id: int, designation: str, tourney_id: int, div
                     start_date=pe.begin_date, end_date=pe.end_date,
                     city=pe.city, state=pe.state_code, country_code=pe.country_code,
                     pdga_event_id=pdga_event_id, winner_id=winner_id, tourney_id=tourney_id,
-                    results=json.dumps(pe.data['division_results'][div])))
+                    results=pe.data['division_results'][div]))
         s.commit()
 
 def get_completed_unloaded_events() -> list[dict | None]:
