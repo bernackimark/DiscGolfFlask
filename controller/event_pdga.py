@@ -75,8 +75,8 @@ class PDGAEvent:
         response = requests.get(f'{EVENT_BASE_URL}{self.pdga_event_id}')
 
         if response.status_code != 200:
-            print(f"Failed to fetch from URL f'{EVENT_BASE_URL}{self.pdga_event_id}'. Status code: {response.status_code}")
-            exit()
+            raise requests.exceptions.HTTPError(f"Failed to fetch from URL f'{EVENT_BASE_URL}{self.pdga_event_id}'. "
+                                                f"Status code: {response.status_code}")
 
         # Parse the HTML content with BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
