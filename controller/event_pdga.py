@@ -41,12 +41,13 @@ class PDGAEvent:
 
     @property
     def location(self) -> tuple[str, str, str]:
-        """Returns city, state code | None, country code"""
+        """Returns city, state code | '', country code"""
         location = self.data['location']
         string = location[location.index(': ') + 2:]
-        city, state_full, country_full = string.split(', ')
+        city, *state_full, country_full = string.split(', ')
         country_code = next((code for code, data in get_countries().items() if data['name'] == country_full), None)
-        state_code = next((code for code, name in states.items() if name == state_full), None)
+        state_full = state_full[0] if state_full else None
+        state_code = next((code for code, name in states.items() if name == state_full), '')
         if not country_code:
             raise ValueError(f"Country not found from country name: {country_full}")
         return city, state_code, country_code
